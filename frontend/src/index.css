@@ -1,13 +1,74 @@
+:root {
+  /* A ledger/receipt-paper palette: the subject is splitting bills, so amounts and
+     line items borrow the vocabulary of an actual receipt. */
+  --paper: #fbf7ef;
+  --paper-raised: #ffffff;
+  --ink: #1f2a24;
+  --ink-soft: #5c6b62;
+  --line: #ded4c1;
+  --ledger-green: #1f6f4a;
+  --ledger-green-soft: #e4f0e9;
+  --owed-red: #a83a2e;
+  --owed-red-soft: #f6e6e3;
+  --stamp-gold: #c9932f;
+
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+
+  color-scheme: light;
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
   min-height: 100dvh;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.amount {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.amount--owed {
+  color: var(--owed-red);
+}
+
+.amount--credit {
+  color: var(--ledger-green);
+}
+
+a {
+  color: var(--ledger-green);
+}
+
+:focus-visible {
+  outline: 2px solid var(--stamp-gold);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  background: #f8f9fb;
+  background: var(--paper);
 }
 
 .app-topbar {
@@ -10,27 +10,28 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.9rem 1.1rem;
-  background: #1d4ed8;
-  color: #fff;
+  background: var(--ink);
+  color: var(--paper);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
 .app-topbar__brand {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1.05rem;
   letter-spacing: -0.01em;
 }
 
 .app-topbar__user {
-  font-size: 0.85rem;
-  opacity: 0.85;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  opacity: 0.75;
 }
 
 .app-content {
   flex: 1;
-  padding: 1rem 1rem calc(1rem + 64px);
+  padding: 1.1rem 1.1rem calc(1.1rem + 64px);
   max-width: 640px;
   width: 100%;
   margin: 0 auto;
@@ -42,8 +43,8 @@
   left: 0;
   right: 0;
   display: flex;
-  background: #fff;
-  border-top: 1px solid #e5e7eb;
+  background: var(--paper-raised);
+  border-top: 1px solid var(--line);
   padding-bottom: env(safe-area-inset-bottom);
   z-index: 10;
 }
@@ -54,14 +55,14 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 0.5rem 0;
+  padding: 0.55rem 0;
   font-size: 0.72rem;
-  color: #6b7280;
+  color: var(--ink-soft);
   text-decoration: none;
 }
 
 .app-bottomnav__item.is-active {
-  color: #1d4ed8;
+  color: var(--ledger-green);
   font-weight: 600;
 }
 

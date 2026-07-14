@@ -15,8 +15,8 @@ export default defineConfig({
         name: 'Split Even Wiser',
         short_name: 'SplitEven',
         description: 'Split expenses with friends, free and simple.',
-        theme_color: '#1d4ed8',
-        background_color: '#ffffff',
+        theme_color: '#1F6F4A',
+        background_color: '#FBF7EF',
         display: 'standalone',
         start_url: '/',
         icons: [
