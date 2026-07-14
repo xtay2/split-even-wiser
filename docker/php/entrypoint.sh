@@ -16,11 +16,19 @@ if [ ! -d vendor ]; then
     composer install --no-interaction --prefer-dist
 fi
 
+# The bind-mounted source tree is owned by the host user, but php-fpm's worker
+# processes run as www-data — keep the runtime-writable dirs open so both can write.
+chmod -R ugo+rwX storage bootstrap/cache
+
 if [ ! -f .env ]; then
     cp .env.example .env
     php artisan key:generate --ansi
 fi
 
 php artisan migrate --force
+
+if [ ! -L public/storage ]; then
+    php artisan storage:link
+fi
 
 exec "$@"
