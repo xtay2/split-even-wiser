@@ -1,0 +1,106 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: split_even_wiser
+      POSTGRES_USER: split_even_wiser
+      POSTGRES_PASSWORD: split_even_wiser
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U split_even_wiser"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    restart: unless-stopped
+    volumes:
+      - ./backend:/var/www/html
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      MAIL_HOST: mailserver
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  queue:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    restart: unless-stopped
+    command: ["php", "artisan", "queue:work", "--tries=3", "--sleep=1"]
+    volumes:
+      - ./backend:/var/www/html
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      MAIL_HOST: mailserver
+    depends_on:
+      - app
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    volumes:
+      - ./backend:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8000:80"
+    depends_on:
+      - app
+
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000/api
+
+  mailserver:
+    image: docker.io/mailserver/docker-mailserver:latest
+    hostname: mail.split-even-wiser.local
+    restart: unless-stopped
+    env_file:
+      - ./docker/mailserver/mailserver.env
+    ports:
+      - "25:25"
+      - "587:587"
+      - "993:993"
+    volumes:
+      - mail-data:/var/mail
+      - mail-state:/var/mail-state
+      - mail-logs:/var/log/mail
+      - ./docker/mailserver/config:/tmp/docker-mailserver
+    cap_add:
+      - NET_ADMIN
+
+volumes:
+  postgres-data:
+  redis-data:
+  mail-data:
+  mail-state:
+  mail-logs:
