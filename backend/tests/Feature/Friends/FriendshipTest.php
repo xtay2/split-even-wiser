@@ -98,8 +98,9 @@ it('lists accepted friends both directions', function () {
     $response = $this->actingAs($alice)->getJson('/api/friends');
 
     $response->assertOk();
-    expect(collect($response->json())->pluck('id')->sort()->values()->all())
+    expect(collect($response->json())->pluck('user.id')->sort()->values()->all())
         ->toBe(collect([$bob->id, $carol->id])->sort()->values()->all());
+    expect(collect($response->json())->pluck('friendship_id'))->each->not->toBeNull();
 });
 
 it('lists incoming and outgoing pending requests', function () {

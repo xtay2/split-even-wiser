@@ -1,0 +1,94 @@
+.friends-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.friends-section-title {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  margin: 0 0 0.6rem;
+}
+
+.friends-add-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.friends-add-input {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper-raised);
+  font-size: 0.92rem;
+}
+
+.friends-add-btn {
+  padding: 0.6rem 1.1rem;
+  border: none;
+  border-radius: 6px;
+  background: var(--ledger-green);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.friends-add-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.friends-error {
+  color: var(--owed-red);
+  font-size: 0.82rem;
+  margin: 0.4rem 0 0;
+}
+
+.friends-success {
+  color: var(--ledger-green);
+  font-size: 0.82rem;
+  margin: 0.4rem 0 0;
+}
+
+.friends-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.friends-empty {
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+
+.friends-accept-btn,
+.friends-decline-btn,
+.friends-remove-btn {
+  border: none;
+  border-radius: 5px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.friends-accept-btn {
+  background: var(--ledger-green);
+  color: #fff;
+}
+
+.friends-decline-btn,
+.friends-remove-btn {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+}
+
+.friends-pending-label {
+  font-size: 0.75rem;
+  color: var(--stamp-gold);
+  font-weight: 600;
+}

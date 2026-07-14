@@ -14,7 +14,19 @@ class FriendshipController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        return response()->json($request->user()->friends()->values());
+        $user = $request->user();
+
+        $friendships = Friendship::query()
+            ->where('status', 'accepted')
+            ->where(fn ($query) => $query->where('requester_id', $user->id)->orWhere('addressee_id', $user->id))
+            ->with(['requester', 'addressee'])
+            ->get()
+            ->map(fn (Friendship $friendship) => [
+                'friendship_id' => $friendship->id,
+                'user' => $friendship->requester_id === $user->id ? $friendship->addressee : $friendship->requester,
+            ]);
+
+        return response()->json($friendships);
     }
 
     public function requests(Request $request): JsonResponse
