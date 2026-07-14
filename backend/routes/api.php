@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\FriendshipController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\PushSubscriptionController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/request-token', [AuthController::class, 'requestToken'])
@@ -15,4 +17,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [ProfileController::class, 'show']);
     Route::patch('/me', [ProfileController::class, 'update']);
     Route::post('/me/avatar', [ProfileController::class, 'uploadAvatar']);
+
+    Route::get('/friends', [FriendshipController::class, 'index']);
+    Route::get('/friends/requests', [FriendshipController::class, 'requests']);
+    Route::post('/friends/requests', [FriendshipController::class, 'store']);
+    Route::post('/friends/requests/{friendship}/accept', [FriendshipController::class, 'accept']);
+    Route::post('/friends/requests/{friendship}/decline', [FriendshipController::class, 'decline']);
+    Route::delete('/friends/{friendship}', [FriendshipController::class, 'destroy']);
+
+    Route::post('/push/subscription', [PushSubscriptionController::class, 'store']);
+    Route::delete('/push/subscription', [PushSubscriptionController::class, 'destroy']);
 });
