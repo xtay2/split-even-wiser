@@ -1,0 +1,71 @@
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: #f8f9fb;
+}
+
+.app-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.1rem;
+  background: #1d4ed8;
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.app-topbar__brand {
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.app-topbar__user {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.app-content {
+  flex: 1;
+  padding: 1rem 1rem calc(1rem + 64px);
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.app-bottomnav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: #fff;
+  border-top: 1px solid #e5e7eb;
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 10;
+}
+
+.app-bottomnav__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0.5rem 0;
+  font-size: 0.72rem;
+  color: #6b7280;
+  text-decoration: none;
+}
+
+.app-bottomnav__item.is-active {
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.app-bottomnav__icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
