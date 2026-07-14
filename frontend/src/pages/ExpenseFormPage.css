@@ -1,0 +1,147 @@
+.expense-form-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.expense-form-title {
+  font-size: 1.3rem;
+}
+
+.expense-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.expense-form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  flex: 1;
+}
+
+.expense-form-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.expense-form-input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper-raised);
+  font-size: 0.95rem;
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+.expense-form-input--currency {
+  width: 5rem;
+  text-transform: uppercase;
+}
+
+.expense-form-input--share {
+  width: 6rem;
+}
+
+.expense-form-fieldset {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.expense-form-fieldset legend {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  padding: 0 0.3rem;
+}
+
+.expense-form-split-toggle {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.3rem;
+}
+
+.expense-form-split-toggle button {
+  flex: 1;
+  padding: 0.45rem 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.expense-form-split-toggle button.is-active {
+  background: var(--ledger-green);
+  border-color: var(--ledger-green);
+  color: #fff;
+}
+
+.expense-form-participant {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.35rem 0;
+}
+
+.expense-form-participant__check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.expense-form-split-total {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  text-align: right;
+  color: var(--ledger-green);
+  margin: 0;
+}
+
+.expense-form-split-total.is-mismatched {
+  color: var(--owed-red);
+}
+
+.expense-form-error {
+  color: var(--owed-red);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.expense-form-submit {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: var(--ledger-green);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.expense-form-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.expense-form-delete {
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--owed-red);
+  border-radius: 6px;
+  background: none;
+  color: var(--owed-red);
+  font-weight: 600;
+  cursor: pointer;
+}

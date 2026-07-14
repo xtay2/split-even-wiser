@@ -2,6 +2,14 @@
 
 use App\Models\User;
 
+it('exposes the VAPID public key to authenticated users', function () {
+    config(['webpush.vapid.public_key' => 'test-public-key']);
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->getJson('/api/push/vapid-public-key')
+        ->assertOk()->assertJsonPath('public_key', 'test-public-key');
+});
+
 it('stores a push subscription for the authenticated user', function () {
     $user = User::factory()->create();
 

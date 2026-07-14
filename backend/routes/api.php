@@ -28,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/friends/requests/{friendship}/decline', [FriendshipController::class, 'decline']);
     Route::delete('/friends/{friendship}', [FriendshipController::class, 'destroy']);
 
+    Route::get('/push/vapid-public-key', [PushSubscriptionController::class, 'vapidPublicKey']);
     Route::post('/push/subscription', [PushSubscriptionController::class, 'store']);
     Route::delete('/push/subscription', [PushSubscriptionController::class, 'destroy']);
 

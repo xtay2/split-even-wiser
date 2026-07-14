@@ -8,6 +8,11 @@ use Illuminate\Http\Request;
 
 class PushSubscriptionController extends Controller
 {
+    public function vapidPublicKey(): JsonResponse
+    {
+        return response()->json(['public_key' => config('webpush.vapid.public_key')]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([

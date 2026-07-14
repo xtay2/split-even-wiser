@@ -8,7 +8,16 @@ import {
   useLogoutMutation,
 } from '../api/authApi'
 import { loggedOut, selectCurrentUser, userUpdated } from '../features/auth/authSlice'
+import { isPushSupported, usePushSubscription } from '../features/push/usePushSubscription'
 import './ProfilePage.css'
+
+const PUSH_STATUS_LABEL = {
+  idle: 'Enable push notifications',
+  subscribing: 'Enabling…',
+  subscribed: 'Notifications enabled',
+  denied: 'Notifications blocked — check your browser settings',
+  error: 'Could not enable notifications',
+}
 
 export default function ProfilePage() {
   const cachedUser = useSelector(selectCurrentUser)
@@ -23,6 +32,7 @@ export default function ProfilePage() {
   const [username, setUsername] = useState(user?.username ?? '')
   const [editing, setEditing] = useState(false)
   const [error, setError] = useState(null)
+  const { status: pushStatus, enable: enablePush } = usePushSubscription()
 
   if (!user) return null
 
@@ -124,6 +134,17 @@ export default function ProfilePage() {
           <dd className="amount">{user.email}</dd>
         </div>
       </dl>
+
+      {isPushSupported() && (
+        <button
+          type="button"
+          className="profile-push-btn"
+          onClick={enablePush}
+          disabled={pushStatus === 'subscribing' || pushStatus === 'subscribed'}
+        >
+          {PUSH_STATUS_LABEL[pushStatus]}
+        </button>
+      )}
 
       <button type="button" className="profile-logout-btn" onClick={handleLogout}>
         Log out

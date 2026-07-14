@@ -1,0 +1,34 @@
+.activity-feed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.activity-entry {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px dashed var(--line);
+  font-size: 0.86rem;
+}
+
+.activity-entry:last-child {
+  border-bottom: none;
+}
+
+.activity-entry__text {
+  flex: 1;
+  color: var(--ink);
+}
+
+.activity-entry__amount {
+  font-size: 0.82rem;
+}
+
+.activity-entry__date {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}

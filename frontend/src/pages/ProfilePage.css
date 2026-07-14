@@ -121,6 +121,22 @@
   margin: 0.35rem 0 0;
 }
 
+.profile-push-btn {
+  align-self: center;
+  background: none;
+  border: 1px solid var(--ledger-green);
+  color: var(--ledger-green);
+  border-radius: 6px;
+  padding: 0.6rem 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.profile-push-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .profile-logout-btn {
   align-self: center;
   background: none;
