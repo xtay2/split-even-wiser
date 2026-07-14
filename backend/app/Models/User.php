@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -63,5 +64,12 @@ class User extends Authenticatable
         $receivedIds = $this->receivedFriendRequests()->where('status', 'accepted')->pluck('requester_id');
 
         return User::query()->whereIn('id', $requestedIds->merge($receivedIds))->get();
+    }
+
+    public function groups(): BelongsToMany
+    {
+        return $this->belongsToMany(Group::class, 'group_members')
+            ->withPivot(['id', 'joined_at', 'left_at'])
+            ->wherePivotNull('left_at');
     }
 }

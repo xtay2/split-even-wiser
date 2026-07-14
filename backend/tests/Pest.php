@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\Group;
+use App\Models\User;
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -15,6 +18,10 @@ pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Feature');
 
+// The "array" cache store backing the rate limiter is a plain in-memory array that
+// otherwise leaks attempt counts across test cases within the same suite run.
+beforeEach(fn () => Illuminate\Support\Facades\Cache::flush());
+
 /*
 |--------------------------------------------------------------------------
 | Expectations
@@ -25,4 +32,21 @@ pest()->extend(Tests\TestCase::class)
 | to assert different things. Of course, you may extend the Expectation API at any time.
 |
 */
+
+/*
+|--------------------------------------------------------------------------
+| Functions
+|--------------------------------------------------------------------------
+*/
+
+function groupWithMembers(User ...$users): Group
+{
+    $group = Group::factory()->create(['created_by' => $users[0]->id]);
+
+    foreach ($users as $user) {
+        $group->groupMembers()->create(['user_id' => $user->id, 'joined_at' => now()]);
+    }
+
+    return $group;
+}
 
