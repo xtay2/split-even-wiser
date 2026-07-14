@@ -17,7 +17,7 @@ docker compose up --build
 
 - Backend API: http://localhost:8000
 - Frontend dev server: http://localhost:5173
-- Postgres: localhost:5432
+- Postgres: localhost:5433 (mapped off the default 5432 to avoid clashing with a host-local Postgres)
 - Mail (SMTP submission): localhost:587
 
 The `app` container's entrypoint installs composer dependencies, generates `APP_KEY` if missing,
