@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\User;
+use App\Services\DebtSimplifier;
 use App\Services\GroupBalanceCalculator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 class GroupController extends Controller
@@ -107,5 +109,62 @@ class GroupController extends Controller
         $membership->update(['left_at' => now()]);
 
         return response()->json(status: 204);
+    }
+
+    public function balances(Request $request, Group $group, DebtSimplifier $simplifier): JsonResponse
+    {
+        $this->authorize('view', $group);
+
+        return response()->json($simplifier->simplify($group));
+    }
+
+    public function activity(Request $request, Group $group): JsonResponse
+    {
+        $this->authorize('view', $group);
+
+        $versions = $group->expenses()
+            ->withTrashed()
+            ->with(['versions.payer', 'versions.creator'])
+            ->get()
+            ->flatMap(fn ($expense) => $expense->versions->map(fn ($version) => [
+                'type' => 'expense_version',
+                'expense_id' => $expense->id,
+                'version_no' => $version->version_no,
+                'title' => $version->title,
+                'amount' => $version->amount,
+                'currency' => $version->currency,
+                'paid_by' => $version->payer,
+                'created_by' => $version->creator,
+                'created_at' => $version->created_at,
+            ]));
+
+        $deletions = $group->expenses()
+            ->onlyTrashed()
+            ->with('versions')
+            ->get()
+            ->map(fn ($expense) => [
+                'type' => 'expense_deleted',
+                'expense_id' => $expense->id,
+                'title' => $expense->currentVersion?->title,
+                'created_at' => $expense->deleted_at,
+            ]);
+
+        $settlements = $group->settlements()
+            ->with(['fromUser', 'toUser'])
+            ->get()
+            ->map(fn ($settlement) => [
+                'type' => 'settlement',
+                'from_user' => $settlement->fromUser,
+                'to_user' => $settlement->toUser,
+                'amount' => $settlement->amount,
+                'currency' => $settlement->currency,
+                'created_at' => $settlement->created_at,
+            ]);
+
+        $activity = Collection::make([...$versions, ...$deletions, ...$settlements])
+            ->sortByDesc('created_at')
+            ->values();
+
+        return response()->json($activity);
     }
 }

@@ -37,6 +37,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/groups/{group}', [GroupController::class, 'update']);
     Route::post('/groups/{group}/members', [GroupController::class, 'addMember']);
     Route::delete('/groups/{group}/members/{user}', [GroupController::class, 'leave']);
+    Route::get('/groups/{group}/balances', [GroupController::class, 'balances']);
+    Route::get('/groups/{group}/activity', [GroupController::class, 'activity']);
 
     Route::get('/groups/{group}/expenses', [ExpenseController::class, 'index']);
     Route::post('/groups/{group}/expenses', [ExpenseController::class, 'store']);
