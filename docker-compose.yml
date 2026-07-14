@@ -34,7 +34,15 @@ services:
     environment:
       DB_HOST: postgres
       REDIS_HOST: redis
-      MAIL_HOST: mailserver
+      # Local dev sends mail through Mailhog (view at http://localhost:8026) rather than
+      # the docker-mailserver container, which is heavier and only worth exercising when
+      # you actually need to test real SMTP delivery/DKIM/etc — see docker/mailserver/README.
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      MAIL_USERNAME: null
+      MAIL_PASSWORD: null
+      MAIL_ENCRYPTION: null
     depends_on:
       postgres:
         condition: service_healthy
@@ -54,7 +62,12 @@ services:
     environment:
       DB_HOST: postgres
       REDIS_HOST: redis
-      MAIL_HOST: mailserver
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      MAIL_USERNAME: null
+      MAIL_PASSWORD: null
+      MAIL_ENCRYPTION: null
     depends_on:
       - app
 
@@ -80,6 +93,17 @@ services:
     environment:
       VITE_API_URL: http://localhost:8000/api
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    restart: unless-stopped
+    ports:
+      - "8026:8025" # web UI: view every mail the app sends in dev
+      - "1026:1025" # SMTP submission (only needed for host-side tools; the app talks to
+                     # mailhog:1025 over the internal docker network regardless)
+
+  # A production-shaped mailserver, per the spec ("nutzt docker-mailserver für den
+  # E-Mail-Versand"). Not used by default in local dev — see docker/mailserver/README.md
+  # for how to point the app at it instead of Mailhog.
   mailserver:
     image: docker.io/mailserver/docker-mailserver:latest
     hostname: mail.split-even-wiser.local

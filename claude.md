@@ -1,5 +1,5 @@
 ### Technologie
-Dies ist eine Mobile First, Progressive Web App mit einem PHP 8.5, Laravel 12 Backend (REST Api), und einem React 19, Redux (Toolkit), Bootstrap 5 Frontend. PostgreSQL als Datenbank.
+Dies ist eine Mobile First, Progressive Web App mit einem PHP 8.5, Laravel 12 Backend (REST Api), und einem React 19, Typescript 7, Redux (Toolkit), Bootstrap 5 Frontend. PostgreSQL als Datenbank. Mailhog für lokalen Mailtest.
 Die Anwendung läuft in Docker Compose und nutzt docker-mailserver für den E-Mail-Versand.
 
 ### Funktionalität
