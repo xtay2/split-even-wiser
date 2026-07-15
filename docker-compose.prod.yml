@@ -1,0 +1,48 @@
+# Production overlay. Use together with the base file, and only start the services
+# that make sense on a public host (skip the dev-only `frontend` vite server and
+# `mailhog`):
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d \
+#     postgres redis app queue nginx certbot
+#
+# See docker/certbot/init-letsencrypt.sh for one-time TLS bootstrap before the
+# first `up`.
+services:
+  nginx:
+    volumes:
+      - ./backend:/var/www/html:ro
+      - ./docker/nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - frontend-dist:/var/www/frontend:ro
+      - certbot-webroot:/var/www/certbot:ro
+      - certbot-conf:/etc/letsencrypt:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - app
+
+  # One-shot: builds the React SPA into the frontend-dist volume that nginx serves.
+  # Re-run this (`docker compose ... run --rm frontend-build`) after every frontend
+  # change/deploy; it does not run automatically on `up`.
+  frontend-build:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run build"
+    volumes:
+      - ./frontend:/app
+      - frontend-dist:/app/dist
+    environment:
+      VITE_API_URL: https://split-even-wiser.com/api
+
+  certbot:
+    image: certbot/certbot
+    restart: unless-stopped
+    volumes:
+      - certbot-conf:/etc/letsencrypt
+      - certbot-webroot:/var/www/certbot
+    entrypoint: sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done"
+
+volumes:
+  frontend-dist:
+  certbot-conf:
+  certbot-webroot:
