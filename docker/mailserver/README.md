@@ -30,9 +30,9 @@ Use this when you specifically want to exercise the real mailserver path.
    MAIL_PASSWORD=<the password you set above>
    ```
 
-   Restart the `app` and `queue` containers to pick up the change (or unset the
-   `MAIL_HOST`/`MAIL_PORT`/etc. overrides in `docker-compose.yml`'s `app`/`queue` services,
-   which currently pin those to Mailhog for local dev).
+   Restart the `app` and `queue` containers to pick up the change (or comment out the
+   `MAIL_HOST`/`MAIL_PORT`/etc. overrides in `docker-compose.override.yml`'s `app`/`queue`
+   services, which currently pin those to Mailhog for local dev).
 
 4. Mail sent through `mailserver` won't actually leave the container without real DNS
    (MX records, SPF, DKIM) pointing at wherever you're running this — that's expected for

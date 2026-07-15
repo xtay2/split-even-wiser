@@ -34,15 +34,6 @@ services:
     environment:
       DB_HOST: postgres
       REDIS_HOST: redis
-      # Local dev sends mail through Mailhog (view at http://localhost:8026) rather than
-      # the docker-mailserver container, which is heavier and only worth exercising when
-      # you actually need to test real SMTP delivery/DKIM/etc — see docker/mailserver/README.
-      MAIL_MAILER: smtp
-      MAIL_HOST: mailhog
-      MAIL_PORT: 1025
-      MAIL_USERNAME: null
-      MAIL_PASSWORD: null
-      MAIL_ENCRYPTION: null
     depends_on:
       postgres:
         condition: service_healthy
@@ -62,12 +53,6 @@ services:
     environment:
       DB_HOST: postgres
       REDIS_HOST: redis
-      MAIL_MAILER: smtp
-      MAIL_HOST: mailhog
-      MAIL_PORT: 1025
-      MAIL_USERNAME: null
-      MAIL_PASSWORD: null
-      MAIL_ENCRYPTION: null
     depends_on:
       - app
 
