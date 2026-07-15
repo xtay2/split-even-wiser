@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import {
   useGetGroupQuery,
   useGetExpenseQuery,
@@ -9,6 +9,8 @@ import {
   useDeleteExpenseMutation,
 } from '../api/groupsApi'
 import { selectCurrentUser } from '../features/auth/authSlice'
+import useOnlineStatus from '../features/offline/useOnlineStatus'
+import { queueOfflineAction } from '../features/offline/offlineQueueSlice'
 import './ExpenseFormPage.css'
 
 // Distributes `totalCents` evenly across `count` shares, handing any remainder cent(s)
@@ -22,7 +24,9 @@ function splitEvenly(totalCents, count) {
 export default function ExpenseFormPage() {
   const { groupId, expenseId } = useParams()
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const currentUser = useSelector(selectCurrentUser)
+  const isOnline = useOnlineStatus()
   const isEditing = Boolean(expenseId)
 
   const { data: group } = useGetGroupQuery(groupId)
@@ -63,7 +67,13 @@ export default function ExpenseFormPage() {
     }
   }, [expense])
 
-  if (!group) return null
+  if (!group) {
+    return isOnline ? null : (
+      <p className="expense-form-offline-note">
+        This group isn't available offline yet. Open it once while online to use it here.
+      </p>
+    )
+  }
 
   const included = group.members.filter((member) => participants[member.id]?.included)
 
@@ -104,19 +114,39 @@ export default function ExpenseFormPage() {
       shares: buildShares(),
     }
 
-    try {
-      if (isEditing) {
+    if (isEditing) {
+      try {
         await updateExpense({ groupId, expenseId, ...payload }).unwrap()
-      } else {
-        await createExpense({ groupId, ...payload }).unwrap()
+        navigate(`/groups/${groupId}`)
+      } catch {
+        // error surfaced below
       }
+      return
+    }
+
+    if (!isOnline) {
+      dispatch(queueOfflineAction({ type: 'expense', groupId, payload, label: title }))
       navigate(`/groups/${groupId}`)
-    } catch {
-      // error surfaced below
+      return
+    }
+
+    try {
+      await createExpense({ groupId, ...payload }).unwrap()
+      navigate(`/groups/${groupId}`)
+    } catch (submitError) {
+      if (submitError?.status === 'FETCH_ERROR') {
+        // The browser thought it was online but the request didn't make it — fall back to
+        // queueing rather than losing what the user entered.
+        dispatch(queueOfflineAction({ type: 'expense', groupId, payload, label: title }))
+        navigate(`/groups/${groupId}`)
+        return
+      }
+      // validation error surfaced below via createError
     }
   }
 
   async function handleDelete() {
+    if (!isOnline) return
     await deleteExpense({ groupId, expenseId }).unwrap()
     navigate(`/groups/${groupId}`)
   }
@@ -235,12 +265,24 @@ export default function ExpenseFormPage() {
           </p>
         )}
 
-        <button type="submit" className="expense-form-submit" disabled={isCreating || isUpdating || included.length === 0}>
+        {!isOnline && (
+          <p className="expense-form-offline-note">
+            {isEditing
+              ? "You're offline — editing requires an internet connection."
+              : "You're offline — this expense will be saved and synced automatically once you're back online."}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          className="expense-form-submit"
+          disabled={isCreating || isUpdating || included.length === 0 || (isEditing && !isOnline)}
+        >
           {isEditing ? 'Save changes' : 'Add expense'}
         </button>
 
         {isEditing && (
-          <button type="button" className="expense-form-delete" onClick={handleDelete}>
+          <button type="button" className="expense-form-delete" onClick={handleDelete} disabled={!isOnline}>
             Delete expense
           </button>
         )}

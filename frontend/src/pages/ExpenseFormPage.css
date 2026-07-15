@@ -145,3 +145,18 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+.expense-form-delete:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.expense-form-offline-note {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  background: var(--paper-raised);
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  margin: 0;
+}

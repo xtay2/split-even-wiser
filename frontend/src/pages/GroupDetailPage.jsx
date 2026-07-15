@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import {
   useGetGroupQuery,
   useGetBalancesQuery,
@@ -11,13 +11,18 @@ import {
   useCreateSettlementMutation,
 } from '../api/groupsApi'
 import { selectCurrentUser } from '../features/auth/authSlice'
+import useOnlineStatus from '../features/offline/useOnlineStatus'
+import { queueOfflineAction, itemRetried, itemDiscarded, selectQueueItems } from '../features/offline/offlineQueueSlice'
 import ActivityFeed from '../components/ActivityFeed'
 import './GroupDetailPage.css'
 
 export default function GroupDetailPage() {
   const { groupId } = useParams()
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const currentUser = useSelector(selectCurrentUser)
+  const isOnline = useOnlineStatus()
+  const queueItems = useSelector(selectQueueItems)
 
   const { data: group } = useGetGroupQuery(groupId)
   const { data: balances = [] } = useGetBalancesQuery(groupId)
@@ -31,7 +36,11 @@ export default function GroupDetailPage() {
   const [memberIdentifier, setMemberIdentifier] = useState('')
   const [showAddMember, setShowAddMember] = useState(false)
 
-  if (!group) return null
+  if (!group) {
+    return isOnline ? null : (
+      <p className="friends-empty">This group isn't available offline yet. Open it once while online to use it here.</p>
+    )
+  }
 
   const membersById = Object.fromEntries(group.members.map((member) => [member.id, member]))
   const nameFor = (userId) => (userId === currentUser.id ? 'You' : `@${membersById[userId]?.username ?? '?'}`)
@@ -41,6 +50,13 @@ export default function GroupDetailPage() {
   )
   const otherBalances = balances.filter(
     (transaction) => transaction.from_user_id !== currentUser.id && transaction.to_user_id !== currentUser.id,
+  )
+
+  const pendingItems = queueItems.filter((item) => String(item.groupId) === String(groupId))
+  const pendingExpenses = pendingItems.filter((item) => item.type === 'expense')
+  const pendingSettlements = pendingItems.filter((item) => item.type === 'settlement')
+  const pendingSettlementTargets = new Set(
+    pendingSettlements.filter((item) => item.status === 'pending').map((item) => item.payload.to_user_id),
   )
 
   async function handleAddMember(event) {
@@ -64,12 +80,38 @@ export default function GroupDetailPage() {
   }
 
   async function handleSettle(transaction) {
-    await createSettlement({
-      groupId,
+    const payload = {
       to_user_id: transaction.to_user_id,
       amount: transaction.amount,
       currency: transaction.currency,
-    }).unwrap()
+    }
+
+    if (!isOnline) {
+      dispatch(
+        queueOfflineAction({
+          type: 'settlement',
+          groupId,
+          payload,
+          label: `Settle up with ${nameFor(transaction.to_user_id)}`,
+        }),
+      )
+      return
+    }
+
+    try {
+      await createSettlement({ groupId, ...payload }).unwrap()
+    } catch (settleError) {
+      if (settleError?.status === 'FETCH_ERROR') {
+        dispatch(
+          queueOfflineAction({
+            type: 'settlement',
+            groupId,
+            payload,
+            label: `Settle up with ${nameFor(transaction.to_user_id)}`,
+          }),
+        )
+      }
+    }
   }
 
   return (
@@ -78,6 +120,32 @@ export default function GroupDetailPage() {
         <h1 className="group-detail-title">{group.name}</h1>
         {group.description && <p className="group-detail-description">{group.description}</p>}
       </header>
+
+      {pendingItems.length > 0 && (
+        <section>
+          <h2 className="friends-section-title">Pending sync</h2>
+          <ul className="pending-sync-list">
+            {[...pendingExpenses, ...pendingSettlements].map((item) => (
+              <li key={item.id} className="pending-sync-row">
+                <span className="pending-sync-row__label">{item.label}</span>
+                {item.status === 'error' ? (
+                  <span className="pending-sync-row__actions">
+                    <span className="pending-sync-row__error">{item.error}</span>
+                    <button type="button" onClick={() => dispatch(itemRetried({ id: item.id }))}>
+                      Retry
+                    </button>
+                    <button type="button" onClick={() => dispatch(itemDiscarded({ id: item.id }))}>
+                      Discard
+                    </button>
+                  </span>
+                ) : (
+                  <span className="pending-sync-row__status">Waiting to sync…</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section>
         <h2 className="friends-section-title">Balances</h2>
@@ -104,8 +172,9 @@ export default function GroupDetailPage() {
                       type="button"
                       className="balance-settle-btn"
                       onClick={() => handleSettle(transaction)}
+                      disabled={pendingSettlementTargets.has(transaction.to_user_id)}
                     >
-                      Mark settled
+                      {pendingSettlementTargets.has(transaction.to_user_id) ? 'Queued' : 'Mark settled'}
                     </button>
                   )}
                 </li>
@@ -152,10 +221,16 @@ export default function GroupDetailPage() {
       <section>
         <div className="groups-header">
           <h2 className="friends-section-title">Members</h2>
-          <button type="button" className="groups-new-btn" onClick={() => setShowAddMember((v) => !v)}>
+          <button
+            type="button"
+            className="groups-new-btn"
+            onClick={() => setShowAddMember((v) => !v)}
+            disabled={!isOnline}
+          >
             {showAddMember ? 'Cancel' : '+ Add member'}
           </button>
         </div>
+        {!isOnline && <p className="expense-form-offline-note">Adding members requires an internet connection.</p>}
         {showAddMember && (
           <form onSubmit={handleAddMember} className="friends-add-form">
             <input
@@ -183,9 +258,12 @@ export default function GroupDetailPage() {
         <ActivityFeed activity={activity} currentUserId={currentUser.id} />
       </section>
 
-      <button type="button" className="group-leave-btn" onClick={handleLeave} disabled={isLeaving}>
+      <button type="button" className="group-leave-btn" onClick={handleLeave} disabled={isLeaving || !isOnline}>
         Leave group
       </button>
+      {!isOnline && (
+        <p className="friends-error group-leave-error">Leaving a group requires an internet connection.</p>
+      )}
       {leaveError && (
         <p className="friends-error group-leave-error">
           {leaveError.data?.message ?? 'Could not leave the group.'}

@@ -29,10 +29,21 @@ class SettlementController extends Controller
             'to_user_id' => ['required', 'integer', 'in:'.$activeMemberIds->implode(',')],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'currency' => ['required', 'string', 'size:3'],
+            'client_uuid' => ['nullable', 'uuid'],
         ]);
 
         if ($data['to_user_id'] === $request->user()->id) {
             throw ValidationException::withMessages(['to_user_id' => 'You cannot settle a debt with yourself.']);
+        }
+
+        // Offline clients resend the same client_uuid when a sync retry follows a dropped
+        // connection; returning the original record keeps the retry idempotent instead of
+        // creating a duplicate settlement.
+        if (isset($data['client_uuid'])) {
+            $existing = $group->settlements()->where('client_uuid', $data['client_uuid'])->first();
+            if ($existing !== null) {
+                return response()->json($existing->load(['fromUser', 'toUser']), 200);
+            }
         }
 
         // You can only declare your own debts settled, per the spec — settlements are
@@ -43,6 +54,7 @@ class SettlementController extends Controller
             'amount' => $data['amount'],
             'currency' => strtoupper($data['currency']),
             'created_by' => $request->user()->id,
+            'client_uuid' => $data['client_uuid'] ?? null,
         ]);
 
         return response()->json($settlement->fresh(['fromUser', 'toUser']), 201);

@@ -29,13 +29,31 @@ class ExpenseController extends Controller
     {
         $this->authorize('view', $group);
 
+        $clientUuid = $request->validate([
+            'client_uuid' => ['nullable', 'uuid'],
+        ])['client_uuid'] ?? null;
+
+        // Offline clients resend the same client_uuid when a sync retry follows a dropped
+        // connection; returning the original record keeps the retry idempotent instead of
+        // creating a duplicate expense.
+        if ($clientUuid !== null) {
+            $existing = $group->expenses()->where('client_uuid', $clientUuid)->first();
+            if ($existing !== null) {
+                return response()->json(
+                    $existing->load(['currentVersion.shares', 'currentVersion.payer', 'creator']),
+                    200,
+                );
+            }
+        }
+
         $data = $this->validateVersionPayload($request, $group);
         $data['paid_by'] ??= $request->user()->id;
 
-        $expense = DB::transaction(function () use ($group, $data, $request) {
+        $expense = DB::transaction(function () use ($group, $data, $request, $clientUuid) {
             $expense = Expense::create([
                 'group_id' => $group->id,
                 'created_by' => $request->user()->id,
+                'client_uuid' => $clientUuid,
             ]);
 
             $version = $this->createVersion($expense, 1, $data, $request->user()->id);

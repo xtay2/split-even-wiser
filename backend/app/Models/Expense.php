@@ -16,6 +16,7 @@ class Expense extends Model
         'group_id',
         'created_by',
         'current_version_id',
+        'client_uuid',
     ];
 
     protected function casts(): array

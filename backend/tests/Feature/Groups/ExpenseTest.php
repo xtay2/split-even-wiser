@@ -145,6 +145,32 @@ it('excludes deleted expenses from the index but soft-deletes rather than hard-d
     expect(Expense::withTrashed()->find($expense->id))->not->toBeNull();
 });
 
+it('is idempotent when the same client_uuid is replayed, for offline sync retries', function () {
+    $alice = User::factory()->create();
+    $bob = User::factory()->create();
+    $group = groupWithMembers($alice, $bob);
+    $clientUuid = (string) Illuminate\Support\Str::uuid();
+
+    $payload = [
+        'title' => 'Dinner',
+        'amount' => 20,
+        'currency' => 'EUR',
+        'client_uuid' => $clientUuid,
+        'shares' => [
+            ['user_id' => $alice->id, 'amount' => 10],
+            ['user_id' => $bob->id, 'amount' => 10],
+        ],
+    ];
+
+    $first = $this->actingAs($alice)->postJson("/api/groups/{$group->id}/expenses", $payload);
+    $first->assertCreated();
+
+    $retry = $this->actingAs($alice)->postJson("/api/groups/{$group->id}/expenses", $payload);
+    $retry->assertOk()->assertJsonPath('id', $first->json('id'));
+
+    expect(Expense::count())->toBe(1);
+});
+
 it('forbids a non-member from creating an expense in a group', function () {
     $outsider = User::factory()->create();
     $group = groupWithMembers(User::factory()->create());

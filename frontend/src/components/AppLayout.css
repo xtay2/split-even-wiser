@@ -29,6 +29,20 @@
   opacity: 0.75;
 }
 
+.app-offline-banner {
+  background: var(--owed-red-soft);
+  color: var(--owed-red);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.5rem 1rem;
+}
+
+.app-offline-banner--syncing {
+  background: var(--ledger-green-soft);
+  color: var(--ledger-green);
+}
+
 .app-content {
   flex: 1;
   padding: 1.1rem 1.1rem calc(1.1rem + 64px);

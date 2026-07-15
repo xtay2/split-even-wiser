@@ -16,6 +16,7 @@ class Settlement extends Model
         'amount',
         'currency',
         'created_by',
+        'client_uuid',
     ];
 
     protected function casts(): array

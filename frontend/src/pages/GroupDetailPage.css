@@ -117,3 +117,51 @@
 .group-leave-error {
   text-align: center;
 }
+
+.pending-sync-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pending-sync-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  background: var(--paper-raised);
+  font-size: 0.85rem;
+  margin-bottom: 0.4rem;
+}
+
+.pending-sync-row__label {
+  font-weight: 600;
+}
+
+.pending-sync-row__status {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+}
+
+.pending-sync-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pending-sync-row__error {
+  color: var(--owed-red);
+  font-size: 0.78rem;
+}
+
+.pending-sync-row__actions button {
+  border: 1px solid var(--line);
+  background: none;
+  border-radius: 5px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}

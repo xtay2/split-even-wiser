@@ -21,6 +21,23 @@ it('records a settlement made by the authenticated user', function () {
         ->assertJsonPath('to_user_id', $bob->id);
 });
 
+it('is idempotent when the same client_uuid is replayed, for offline sync retries', function () {
+    $alice = User::factory()->create();
+    $bob = User::factory()->create();
+    $group = groupWithMembers($alice, $bob);
+    $clientUuid = (string) Illuminate\Support\Str::uuid();
+
+    $payload = ['to_user_id' => $bob->id, 'amount' => 10, 'currency' => 'EUR', 'client_uuid' => $clientUuid];
+
+    $first = $this->actingAs($alice)->postJson("/api/groups/{$group->id}/settlements", $payload);
+    $first->assertCreated();
+
+    $retry = $this->actingAs($alice)->postJson("/api/groups/{$group->id}/settlements", $payload);
+    $retry->assertOk()->assertJsonPath('id', $first->json('id'));
+
+    expect(Settlement::count())->toBe(1);
+});
+
 it('rejects settling a debt with yourself', function () {
     $alice = User::factory()->create();
     $group = groupWithMembers($alice);

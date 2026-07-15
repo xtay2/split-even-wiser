@@ -2,6 +2,9 @@
 Dies ist eine Mobile First, Progressive Web App mit einem PHP 8.5, Laravel 12 Backend (REST Api), und einem React 19, Typescript 7, Redux (Toolkit), Bootstrap 5 Frontend. PostgreSQL als Datenbank. Mailhog für lokalen Mailtest.
 Die Anwendung läuft in Docker Compose und nutzt docker-mailserver für den E-Mail-Versand.
 
+### Konventionen
+- Mache einen git commit für jede für sich stehende Änderung
+
 ### Funktionalität
 Die App ist eine simple gratis Alternative zu Splitwise, einer mobile App zum Aufteilen von Zahlungen.
 - Account Erstellung (Username + E-Mail) (Kein Passwort, Anmeldung über E-Mail-Token)
@@ -17,3 +20,4 @@ Die App ist eine simple gratis Alternative zu Splitwise, einer mobile App zum Au
     - Man kann angeben seine Schulden beglichen zu haben.
     - Schulden werden transitiv minifiziert. Wenn Person A, Person B 5€ schuldet, und Person B, Person C 5€ schuldet, schuldet nur Person A, Person C 5€.
     - Man kann die Gruppe erst verlassen, wenn man quit ist.
+- Die App soll eine Offline Modus haben in dem es möglich ist, Zahlungen und Begleichungen vorzumerken, jedoch nicht, die Gruppe zu verlassen.
