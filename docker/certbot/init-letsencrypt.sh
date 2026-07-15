@@ -10,7 +10,7 @@ set -euo pipefail
 
 DOMAIN="split-even-wiser.com"
 MAIL_DOMAIN="mail.split-even-wiser.com"
-EMAIL="dennis.woithe@codesupply.de"
+EMAIL="dennis_woithe@web.de"
 COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
 
 echo "==> Building frontend and creating a temporary self-signed cert"
