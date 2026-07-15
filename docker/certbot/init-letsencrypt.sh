@@ -9,6 +9,7 @@
 set -euo pipefail
 
 DOMAIN="split-even-wiser.com"
+MAIL_DOMAIN="mail.split-even-wiser.com"
 EMAIL="dennis.woithe@codesupply.de"
 COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
 
@@ -37,7 +38,20 @@ $COMPOSE run --rm --entrypoint sh certbot -c "
 echo "==> Reloading nginx with the real certificate"
 $COMPOSE exec nginx nginx -s reload
 
+# Separate cert (not a SAN on $DOMAIN) because docker-mailserver's SSL_TYPE=letsencrypt
+# looks up /etc/letsencrypt/live/<its own hostname>/ directly. Requires the DNS A record
+# for $MAIL_DOMAIN to already point at this host - the webroot HTTP-01 challenge is
+# served by the same nginx :80 block regardless of which hostname requested it.
+echo "==> Requesting the mailserver certificate from Let's Encrypt"
+$COMPOSE run --rm --entrypoint sh certbot -c "
+  certbot certonly --webroot -w /var/www/certbot -d $MAIL_DOMAIN \
+    --email $EMAIL --agree-tos --no-eff-email
+"
+
 echo "==> Starting the renewal loop"
 $COMPOSE up -d certbot
+
+echo "==> Starting mailserver with its Let's Encrypt certificate"
+$COMPOSE up -d mailserver
 
 echo "Done. https://$DOMAIN should now be live."

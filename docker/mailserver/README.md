@@ -42,3 +42,45 @@ Use this when you specifically want to exercise the real mailserver path.
 See the [docker-mailserver docs](https://docker-mailserver.github.io/docker-mailserver/latest/)
 for DKIM key generation, DNS setup, and everything needed to actually deliver mail from a
 real domain.
+
+## Production setup
+
+The prod overlay (`docker-compose.prod.yml`) points `mailserver` at the real hostname
+`mail.split-even-wiser.com` with `SSL_TYPE=letsencrypt` instead of the dev-shaped
+self-signed `.local` config above.
+
+1. DNS — the `A` record must exist before step 2 (it's an HTTP-01 challenge), the rest can
+   follow any time before you care about actual deliverability:
+   - `A` record: `mail.split-even-wiser.com` → the VPS's public IP.
+   - `MX` record: `split-even-wiser.com` → `mail.split-even-wiser.com` (priority 10).
+   - SPF TXT record on `split-even-wiser.com`: `v=spf1 mx ~all`.
+2. Run `docker/certbot/init-letsencrypt.sh` once — it now also requests the
+   `mail.split-even-wiser.com` cert and starts `mailserver` with it.
+3. Create the account. Note the address uses the apex domain, not the mailserver's own
+   hostname:
+   ```
+   docker compose -f docker-compose.yml -f docker-compose.prod.yml exec mailserver \
+     setup email add noreply@split-even-wiser.com <a-password>
+   ```
+4. Set `MAIL_HOST`, `MAIL_USERNAME=noreply@split-even-wiser.com`, and `MAIL_PASSWORD` in
+   the server's `backend/.env` to match.
+5. Generate and publish DKIM (do this before sending real mail — most providers spam-box or
+   reject unsigned mail from a domain with an MX record):
+   ```
+   docker compose -f docker-compose.yml -f docker-compose.prod.yml exec mailserver \
+     setup config dkim domain split-even-wiser.com
+   ```
+   This writes the key pair and a ready-to-paste record to
+   `docker/mailserver/config/opendkim/keys/split-even-wiser.com/mail.txt` on the host
+   (gitignored, same as the account credentials). Publish its contents as a TXT record:
+   - Name: `mail._domainkey.split-even-wiser.com`
+   - Value: the `v=DKIM1; k=rsa; p=...` string from `mail.txt` (DNS providers that split TXT
+     records into 255-char chunks handle this automatically — paste the whole value).
+6. Once DKIM/SPF are live and verified (`dig txt mail._domainkey.split-even-wiser.com` should
+   echo the record back, or send a test mail to [mail-tester.com](https://www.mail-tester.com/)),
+   add a DMARC record — start permissive, tighten later:
+   - Name: `_dmarc.split-even-wiser.com`
+   - Value: `v=DMARC1; p=none; rua=mailto:postmaster@split-even-wiser.com`
+
+Certs auto-renew via the existing `certbot` service — no separate renewal setup needed for
+the mail cert. DKIM keys don't expire and don't need renewal.

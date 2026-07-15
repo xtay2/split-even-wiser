@@ -34,6 +34,17 @@ services:
     environment:
       VITE_API_URL: https://split-even-wiser.com/api
 
+  # Real public hostname + Let's Encrypt cert instead of the dev-shaped
+  # self-signed .local setup in the base file. See docker/certbot/init-letsencrypt.sh
+  # for how the mail.split-even-wiser.com cert gets issued.
+  mailserver:
+    hostname: mail.split-even-wiser.com
+    environment:
+      OVERRIDE_HOSTNAME: mail.split-even-wiser.com
+      SSL_TYPE: letsencrypt
+    volumes:
+      - certbot-conf:/etc/letsencrypt:ro
+
   certbot:
     image: certbot/certbot
     restart: unless-stopped
