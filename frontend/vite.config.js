@@ -13,7 +13,7 @@ export default defineConfig({
       injectRegister: 'auto',
       manifest: {
         name: 'Split Even Wiser',
-        short_name: 'SplitEven',
+        short_name: 'Split Even Wiser',
         description: 'Split expenses with friends, free and simple.',
         theme_color: '#1F6F4A',
         background_color: '#FBF7EF',
