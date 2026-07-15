@@ -80,6 +80,10 @@
   font-weight: 600;
 }
 
+.app-bottomnav__item.is-active svg {
+  fill: var(--ledger-green);
+}
+
 .app-bottomnav__icon {
   font-size: 1.25rem;
   line-height: 1;

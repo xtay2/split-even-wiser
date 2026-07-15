@@ -5,11 +5,14 @@ import useOnlineStatus from '../features/offline/useOnlineStatus'
 import useOfflineSync from '../features/offline/useOfflineSync'
 import { selectPendingQueueCount } from '../features/offline/offlineQueueSlice'
 import './AppLayout.css'
+import {GroupIcon} from "./icons/GroupIcon.tsx";
+import {AccountBoxIcon} from "./icons/AccountBoxIcon.tsx";
+import {HandshakeIcon} from "./icons/HandshakeIcon.tsx";
 
 const NAV_ITEMS = [
-  { to: '/groups', label: 'Groups', icon: '👥' },
-  { to: '/friends', label: 'Friends', icon: '🤝' },
-  { to: '/profile', label: 'Profile', icon: '👤' },
+  { to: '/groups', label: 'Groups', icon: <GroupIcon/> },
+  { to: '/friends', label: 'Friends', icon: <HandshakeIcon/> },
+  { to: '/profile', label: 'Profile', icon: <AccountBoxIcon/> },
 ]
 
 export default function AppLayout() {
