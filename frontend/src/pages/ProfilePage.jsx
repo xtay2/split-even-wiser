@@ -52,10 +52,17 @@ export default function ProfilePage() {
     const file = event.target.files?.[0]
     if (!file) return
 
+    setError(null)
     const formData = new FormData()
     formData.append('avatar', file)
-    const updated = await uploadAvatar(formData).unwrap()
-    dispatch(userUpdated({ user: updated }))
+    try {
+      const updated = await uploadAvatar(formData).unwrap()
+      dispatch(userUpdated({ user: updated }))
+    } catch (err) {
+      setError(err.data?.errors?.avatar?.[0] ?? 'Could not upload photo.')
+    } finally {
+      event.target.value = ''
+    }
   }
 
   async function handleLogout() {
