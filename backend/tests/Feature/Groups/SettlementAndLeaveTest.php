@@ -80,6 +80,93 @@ it('rejects settling a debt with yourself', function () {
     ])->assertUnprocessable();
 });
 
+it('shows a single settlement', function () {
+    $alice = User::factory()->create();
+    $bob = User::factory()->create();
+    $group = groupWithMembers($alice, $bob);
+    $settlement = Settlement::create([
+        'group_id' => $group->id, 'from_user_id' => $alice->id, 'to_user_id' => $bob->id,
+        'amount' => 10, 'currency' => 'EUR', 'date' => '2026-07-16', 'created_by' => $alice->id,
+    ]);
+
+    $this->actingAs($alice)->getJson("/api/groups/{$group->id}/settlements/{$settlement->id}")
+        ->assertOk()
+        ->assertJsonPath('amount', '10.00');
+});
+
+it('lets any active member update a settlement, correcting the amount and date', function () {
+    $alice = User::factory()->create();
+    $bob = User::factory()->create();
+    $group = groupWithMembers($alice, $bob);
+    $settlement = Settlement::create([
+        'group_id' => $group->id, 'from_user_id' => $alice->id, 'to_user_id' => $bob->id,
+        'amount' => 10, 'currency' => 'EUR', 'date' => '2026-07-16', 'created_by' => $alice->id,
+    ]);
+
+    $response = $this->actingAs($bob)->patchJson("/api/groups/{$group->id}/settlements/{$settlement->id}", [
+        'to_user_id' => $bob->id,
+        'amount' => 12.5,
+        'currency' => 'usd',
+        'date' => '2026-07-17',
+    ]);
+
+    $response->assertOk()
+        ->assertJsonPath('amount', '12.50')
+        ->assertJsonPath('currency', 'USD')
+        ->assertJsonPath('date', '2026-07-17')
+        ->assertJsonPath('from_user_id', $alice->id);
+});
+
+it('rejects updating a settlement to settle with the original payer', function () {
+    $alice = User::factory()->create();
+    $bob = User::factory()->create();
+    $group = groupWithMembers($alice, $bob);
+    $settlement = Settlement::create([
+        'group_id' => $group->id, 'from_user_id' => $alice->id, 'to_user_id' => $bob->id,
+        'amount' => 10, 'currency' => 'EUR', 'date' => '2026-07-16', 'created_by' => $alice->id,
+    ]);
+
+    $this->actingAs($alice)->patchJson("/api/groups/{$group->id}/settlements/{$settlement->id}", [
+        'to_user_id' => $alice->id,
+        'amount' => 10,
+        'currency' => 'EUR',
+    ])->assertUnprocessable();
+});
+
+it('soft-deletes a settlement, excluding it from the index but keeping the record', function () {
+    $alice = User::factory()->create();
+    $bob = User::factory()->create();
+    $group = groupWithMembers($alice, $bob);
+    $settlement = Settlement::create([
+        'group_id' => $group->id, 'from_user_id' => $alice->id, 'to_user_id' => $bob->id,
+        'amount' => 10, 'currency' => 'EUR', 'date' => '2026-07-16', 'created_by' => $alice->id,
+    ]);
+
+    $this->actingAs($bob)->deleteJson("/api/groups/{$group->id}/settlements/{$settlement->id}")
+        ->assertNoContent();
+
+    $this->actingAs($alice)->getJson("/api/groups/{$group->id}/settlements")->assertOk()->assertJsonCount(0);
+    expect(Settlement::withTrashed()->find($settlement->id))->not->toBeNull();
+});
+
+it('forbids a non-member from updating or deleting a settlement', function () {
+    $alice = User::factory()->create();
+    $bob = User::factory()->create();
+    $outsider = User::factory()->create();
+    $group = groupWithMembers($alice, $bob);
+    $settlement = Settlement::create([
+        'group_id' => $group->id, 'from_user_id' => $alice->id, 'to_user_id' => $bob->id,
+        'amount' => 10, 'currency' => 'EUR', 'date' => '2026-07-16', 'created_by' => $alice->id,
+    ]);
+
+    $this->actingAs($outsider)->patchJson("/api/groups/{$group->id}/settlements/{$settlement->id}", [
+        'to_user_id' => $bob->id, 'amount' => 10, 'currency' => 'EUR',
+    ])->assertForbidden();
+
+    $this->actingAs($outsider)->deleteJson("/api/groups/{$group->id}/settlements/{$settlement->id}")
+        ->assertForbidden();
+});
+
 it('blocks leaving a group with an outstanding balance', function () {
     $alice = User::factory()->create();
     $bob = User::factory()->create();

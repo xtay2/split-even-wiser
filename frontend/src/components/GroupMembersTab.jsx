@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import {useEffect, useRef, useState} from 'react'
 import { useAddGroupMemberMutation } from '../api/groupsApi'
 import { useGetFriendsQuery } from '../api/friendsApi'
+import { GroupAddIcon } from './icons/GroupAddIcon'
 
 export default function GroupMembersTab({ hidden, groupId, group, isOnline }) {
   const { data: friends = [] } = useGetFriendsQuery()
   const [addMember, { isLoading: isAdding, error: addError }] = useAddGroupMemberMutation()
-
+  const memberInputRef = useRef(null);
   const [memberIdentifier, setMemberIdentifier] = useState('')
   const [showAddMember, setShowAddMember] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -33,23 +34,19 @@ export default function GroupMembersTab({ hidden, groupId, group, isOnline }) {
     }
   }
 
+  useEffect(() => {
+    if(showAddMember)
+      memberInputRef.current?.focus();
+  }, [memberInputRef, showAddMember]);
+
   return (
-    <section hidden={hidden}>
-      <div className="groups-header groups-header--end">
-        <button
-          type="button"
-          className="groups-new-btn"
-          onClick={() => setShowAddMember((v) => !v)}
-          disabled={!isOnline}
-        >
-          {showAddMember ? 'Cancel' : '+ Add member'}
-        </button>
-      </div>
+    <section hidden={hidden} className="members-section">
       {!isOnline && <p className="expense-form-offline-note">Adding members requires an internet connection.</p>}
       {showAddMember && (
         <form onSubmit={handleAddMember} className="friends-add-form">
           <div className="member-suggest">
             <input
+              ref={memberInputRef}
               value={memberIdentifier}
               onChange={(event) => {
                 setMemberIdentifier(event.target.value)
@@ -94,6 +91,26 @@ export default function GroupMembersTab({ hidden, groupId, group, isOnline }) {
           <li key={member.id} className="member-chip">@{member.username}</li>
         ))}
       </ul>
+
+      <div className="group-fab-column">
+        <button
+          type="button"
+          className="group-fab group-fab--right"
+          onClick={() => {
+            setShowAddMember((v) => !v);
+          }}
+          disabled={!isOnline}
+        >
+          {showAddMember ? (
+            'Cancel'
+          ) : (
+            <>
+              <GroupAddIcon fontSizePx={20} />
+              Add member
+            </>
+          )}
+        </button>
+      </div>
     </section>
   )
 }

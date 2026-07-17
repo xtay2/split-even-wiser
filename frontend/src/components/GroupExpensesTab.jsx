@@ -5,7 +5,7 @@ import { buildLedgerItems, groupItemsByMonth } from '../utils/groupLedger'
 import { PaymentsIcon } from './icons/PaymentsIcon.tsx'
 import { ReceiptLongIcon } from './icons/ReceiptLongIcon.tsx'
 
-export default function GroupExpensesTab({ hidden, groupId, nameFor }) {
+export default function GroupExpensesTab({ hidden, groupId, nameFor, hasOtherMembers }) {
   const navigate = useNavigate()
   const { data: expenses = [] } = useGetExpensesQuery(groupId)
   const { data: settlements = [] } = useGetSettlementsQuery(groupId)
@@ -21,8 +21,13 @@ export default function GroupExpensesTab({ hidden, groupId, nameFor }) {
             <ul className="expense-list">
               {group.items.map((item) => {
                 if (item.kind === 'settlement') {
+                  const editPath = `/groups/${groupId}/settlements/${item.settlement.id}`
                   return (
-                    <li key={item.key} className="expense-row expense-row--settlement">
+                    <li
+                      key={item.key}
+                      className="expense-row expense-row--settlement"
+                      onClick={() => navigate(editPath)}
+                    >
                       <span className="expense-row__date">{formatExpenseDate(item.date)}</span>
                       <span className="expense-row__title">
                         <span className="settlement-badge">Settlement</span>
@@ -80,14 +85,28 @@ export default function GroupExpensesTab({ hidden, groupId, nameFor }) {
       )}
 
       <div className="group-fab-column">
-        <Link to={`/groups/${groupId}/expenses/new`} className="group-fab group-fab--right">
-          <ReceiptLongIcon />
-          New expense
-        </Link>
-        <Link to={`/groups/${groupId}/settlements/new`} className="group-fab group-fab--right">
-          <PaymentsIcon />
-          New settlement
-        </Link>
+        {hasOtherMembers ? (
+          <Link to={`/groups/${groupId}/expenses/new`} className="group-fab group-fab--right">
+            <ReceiptLongIcon />
+            New expense
+          </Link>
+        ) : (
+          <button type="button" className="group-fab group-fab--right" disabled title="Invite other people to add expenses">
+            <ReceiptLongIcon />
+            New expense
+          </button>
+        )}
+        {hasOtherMembers ? (
+          <Link to={`/groups/${groupId}/settlements/new`} className="group-fab group-fab--right">
+            <PaymentsIcon />
+            New settlement
+          </Link>
+        ) : (
+          <button type="button" className="group-fab group-fab--right" disabled title="Invite other people to add settlements">
+            <PaymentsIcon />
+            New settlement
+          </button>
+        )}
       </div>
     </section>
   )

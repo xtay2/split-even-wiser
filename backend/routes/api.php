@@ -50,4 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/groups/{group}/settlements', [SettlementController::class, 'index']);
     Route::post('/groups/{group}/settlements', [SettlementController::class, 'store']);
+    Route::get('/groups/{group}/settlements/{settlement}', [SettlementController::class, 'show']);
+    Route::patch('/groups/{group}/settlements/{settlement}', [SettlementController::class, 'update']);
+    Route::delete('/groups/{group}/settlements/{settlement}', [SettlementController::class, 'destroy']);
 });

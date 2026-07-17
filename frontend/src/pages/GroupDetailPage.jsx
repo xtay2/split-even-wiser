@@ -29,7 +29,7 @@ export default function GroupDetailPage() {
   const { data: group } = useGetGroupQuery(groupId)
   const [leaveGroup, { isLoading: isLeaving, error: leaveError }] = useLeaveGroupMutation()
 
-  const [activeTab, setActiveTab] = useState('expenses')
+  const [activeTab, setActiveTab] = useState(null)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
 
   if (!group) {
@@ -40,6 +40,11 @@ export default function GroupDetailPage() {
 
   const membersById = Object.fromEntries(group.members.map((member) => [member.id, member]))
   const nameFor = (userId) => (userId === currentUser.id ? 'You' : `@${membersById[userId]?.username ?? '?'}`)
+
+  // Nobody to split with yet — land on Members instead of an empty Expenses tab, until
+  // the person picks a tab themselves.
+  const hasOtherMembers = group.members.length > 1
+  const effectiveTab = activeTab ?? (hasOtherMembers ? 'expenses' : 'members')
 
   async function handleLeave() {
     try {
@@ -95,7 +100,7 @@ export default function GroupDetailPage() {
           <button
             key={tab.key}
             type="button"
-            className={`group-tabs__item${activeTab === tab.key ? ' is-active' : ''}`}
+            className={`group-tabs__item${effectiveTab === tab.key ? ' is-active' : ''}`}
             onClick={() => setActiveTab(tab.key)}
           >
             {tab.label}
@@ -106,14 +111,19 @@ export default function GroupDetailPage() {
       <GroupPendingSyncBanner groupId={groupId} />
 
       <GroupBalancesTab
-        hidden={activeTab !== 'balances'}
+        hidden={effectiveTab !== 'balances'}
         groupId={groupId}
         currentUser={currentUser}
         nameFor={nameFor}
       />
-      <GroupExpensesTab hidden={activeTab !== 'expenses'} groupId={groupId} nameFor={nameFor} />
-      <GroupMembersTab hidden={activeTab !== 'members'} groupId={groupId} group={group} isOnline={isOnline} />
-      <GroupActivityTab hidden={activeTab !== 'activity'} groupId={groupId} currentUserId={currentUser.id} />
+      <GroupExpensesTab
+        hidden={effectiveTab !== 'expenses'}
+        groupId={groupId}
+        nameFor={nameFor}
+        hasOtherMembers={hasOtherMembers}
+      />
+      <GroupMembersTab hidden={effectiveTab !== 'members'} groupId={groupId} group={group} isOnline={isOnline} />
+      <GroupActivityTab hidden={effectiveTab !== 'activity'} groupId={groupId} currentUserId={currentUser.id} />
     </div>
   )
 }

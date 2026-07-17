@@ -95,6 +95,10 @@ export const groupsApi = apiSlice.injectEndpoints({
       query: (groupId) => `/groups/${groupId}/settlements`,
       providesTags: (result, error, groupId) => [{ type: 'Settlements', id: groupId }],
     }),
+    getSettlement: builder.query({
+      query: ({ groupId, settlementId }) => `/groups/${groupId}/settlements/${settlementId}`,
+      providesTags: (result, error, { settlementId }) => [{ type: 'Settlement', id: settlementId }],
+    }),
     createSettlement: builder.mutation({
       query: ({ groupId, ...body }) => ({
         url: `/groups/${groupId}/settlements`,
@@ -103,6 +107,31 @@ export const groupsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result, error, { groupId }) => [
         { type: 'Settlements', id: groupId },
+        { type: 'Balances', id: groupId },
+        { type: 'Activity', id: groupId },
+      ],
+    }),
+    updateSettlement: builder.mutation({
+      query: ({ groupId, settlementId, ...body }) => ({
+        url: `/groups/${groupId}/settlements/${settlementId}`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: (result, error, { groupId, settlementId }) => [
+        { type: 'Settlements', id: groupId },
+        { type: 'Settlement', id: settlementId },
+        { type: 'Balances', id: groupId },
+        { type: 'Activity', id: groupId },
+      ],
+    }),
+    deleteSettlement: builder.mutation({
+      query: ({ groupId, settlementId }) => ({
+        url: `/groups/${groupId}/settlements/${settlementId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (result, error, { groupId, settlementId }) => [
+        { type: 'Settlements', id: groupId },
+        { type: 'Settlement', id: settlementId },
         { type: 'Balances', id: groupId },
         { type: 'Activity', id: groupId },
       ],
@@ -126,5 +155,8 @@ export const {
   useUpdateExpenseMutation,
   useDeleteExpenseMutation,
   useGetSettlementsQuery,
+  useGetSettlementQuery,
   useCreateSettlementMutation,
+  useUpdateSettlementMutation,
+  useDeleteSettlementMutation,
 } = groupsApi

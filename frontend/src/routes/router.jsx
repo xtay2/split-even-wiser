@@ -36,6 +36,7 @@ export const router = createBrowserRouter([
           { path: 'groups/:groupId/expenses/new', element: <ExpenseFormPage /> },
           { path: 'groups/:groupId/expenses/:expenseId', element: <ExpenseFormPage /> },
           { path: 'groups/:groupId/settlements/new', element: <SettlementFormPage /> },
+          { path: 'groups/:groupId/settlements/:settlementId', element: <SettlementFormPage /> },
         ],
       },
     ],

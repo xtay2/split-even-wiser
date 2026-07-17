@@ -89,10 +89,6 @@
   border-bottom-color: var(--ledger-green);
 }
 
-.groups-header--end {
-  justify-content: flex-end;
-}
-
 .balance-list {
   list-style: none;
   margin: 0;
@@ -188,7 +184,6 @@
 }
 
 .expense-row--settlement {
-  cursor: default;
   color: var(--ink-soft);
 }
 
@@ -212,7 +207,8 @@
   margin-right: 0.4rem;
 }
 
-.payments-section {
+.expenses-section,
+.members-section {
   padding-bottom: 4.5rem;
 }
 
@@ -236,6 +232,7 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.7rem 1.1rem;
+  border: none;
   border-radius: 999px;
   background: var(--ledger-green);
   color: #fff;
@@ -245,10 +242,17 @@
   font-size: 0.85rem;
   text-decoration: none;
   box-shadow: 0 6px 16px rgba(31, 42, 36, 0.25);
+  cursor: pointer;
 }
 
-.group-fab:hover {
+.group-fab:hover:not(:disabled) {
   filter: brightness(1.08);
+}
+
+.group-fab:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .member-suggest {

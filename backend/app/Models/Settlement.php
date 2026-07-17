@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Settlement extends Model
 {
+    use SoftDeletes;
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -26,6 +29,7 @@ class Settlement extends Model
             'amount' => 'decimal:2',
             'date' => 'date:Y-m-d',
             'created_at' => 'datetime',
+            'deleted_at' => 'datetime',
         ];
     }
 
