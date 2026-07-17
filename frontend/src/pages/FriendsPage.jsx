@@ -9,6 +9,7 @@ import {
   useRemoveFriendMutation,
 } from '../api/friendsApi'
 import PersonRow from '../components/PersonRow'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { GroupAddIcon } from '../components/icons/GroupAddIcon'
 import './FriendsPage.css'
 
@@ -18,10 +19,20 @@ export default function FriendsPage() {
   const [sendRequest, { isLoading: isSending, error: sendError }] = useSendFriendRequestMutation()
   const [acceptRequest] = useAcceptFriendRequestMutation()
   const [declineRequest] = useDeclineFriendRequestMutation()
-  const [removeFriend] = useRemoveFriendMutation()
+  const [removeFriend, { isLoading: isRemoving }] = useRemoveFriendMutation()
 
   const [identifier, setIdentifier] = useState('')
   const [sent, setSent] = useState(false)
+  const [confirmingFriend, setConfirmingFriend] = useState(null)
+
+  async function handleRemoveFriend() {
+    try {
+      await removeFriend(confirmingFriend.friendship_id).unwrap()
+      setConfirmingFriend(null)
+    } catch {
+      // error stays surfaced via the dialog remaining open
+    }
+  }
 
   async function handleAddFriend(event) {
     event.preventDefault()
@@ -37,6 +48,21 @@ export default function FriendsPage() {
 
   return (
     <div className="friends-screen">
+      <ConfirmDialog
+        open={confirmingFriend !== null}
+        title="Remove friend?"
+        message={
+          confirmingFriend
+            ? `You'll no longer be friends with @${confirmingFriend.user.username}.`
+            : ''
+        }
+        confirmLabel="Remove"
+        danger
+        isConfirming={isRemoving}
+        onConfirm={handleRemoveFriend}
+        onCancel={() => setConfirmingFriend(null)}
+      />
+
       <section>
         <h2 className="friends-section-title">Add a friend</h2>
         <form onSubmit={handleAddFriend} className="friends-add-form">
@@ -119,7 +145,7 @@ export default function FriendsPage() {
                 <button
                   type="button"
                   className="friends-remove-btn"
-                  onClick={() => removeFriend(friend.friendship_id)}
+                  onClick={() => setConfirmingFriend(friend)}
                 >
                   Remove
                 </button>
