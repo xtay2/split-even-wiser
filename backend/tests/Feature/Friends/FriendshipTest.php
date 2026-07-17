@@ -60,6 +60,41 @@ it('rejects a duplicate friend request when already friends', function () {
         ->assertUnprocessable()->assertJsonValidationErrors('identifier');
 });
 
+it('allows sending a request to a new person even when the sender already has an unrelated accepted friend where they are the addressee', function () {
+    $alice = User::factory()->create();
+    $carol = User::factory()->create();
+    $bob = User::factory()->create(['username' => 'bob']);
+    // Carol -> Alice, accepted: Alice is the *addressee* here.
+    Friendship::create(['requester_id' => $carol->id, 'addressee_id' => $alice->id, 'status' => 'accepted']);
+
+    $this->actingAs($alice)->postJson('/api/friends/requests', ['identifier' => 'bob'])
+        ->assertCreated()->assertJsonPath('status', 'pending');
+});
+
+it('allows sending a request to someone who already has an unrelated accepted friend where they are the requester', function () {
+    $alice = User::factory()->create();
+    $carol = User::factory()->create();
+    $bob = User::factory()->create(['username' => 'bob']);
+    // Bob -> Carol, accepted: Bob is the *requester* here, unrelated to Alice.
+    Friendship::create(['requester_id' => $bob->id, 'addressee_id' => $carol->id, 'status' => 'accepted']);
+
+    $this->actingAs($alice)->postJson('/api/friends/requests', ['identifier' => 'bob'])
+        ->assertCreated()->assertJsonPath('status', 'pending');
+});
+
+it('does not list an unrelated existing friend as the target when incorrectly blocked', function () {
+    $alice = User::factory()->create();
+    $carol = User::factory()->create();
+    $bob = User::factory()->create(['username' => 'bob']);
+    Friendship::create(['requester_id' => $carol->id, 'addressee_id' => $alice->id, 'status' => 'accepted']);
+
+    $this->actingAs($alice)->postJson('/api/friends/requests', ['identifier' => 'bob'])->assertCreated();
+
+    $response = $this->actingAs($alice)->getJson('/api/friends');
+    expect(collect($response->json())->pluck('user.id')->all())->toBe([$carol->id]);
+    expect(collect($response->json())->pluck('user.id')->all())->not->toContain($bob->id);
+});
+
 it('accepts an incoming friend request', function () {
     $alice = User::factory()->create();
     $bob = User::factory()->create();

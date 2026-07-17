@@ -63,8 +63,8 @@ class FriendshipController extends Controller
         $existingAccepted = Friendship::query()
             ->where('status', 'accepted')
             ->where(function ($query) use ($user, $target) {
-                $query->where(['requester_id' => $user->id, 'addressee_id' => $target->id])
-                    ->orWhere(['requester_id' => $target->id, 'addressee_id' => $user->id]);
+                $query->where(fn ($q) => $q->where('requester_id', $user->id)->where('addressee_id', $target->id))
+                    ->orWhere(fn ($q) => $q->where('requester_id', $target->id)->where('addressee_id', $user->id));
             })
             ->exists();
 
