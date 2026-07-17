@@ -29,6 +29,19 @@
   opacity: 0.75;
 }
 
+.app-topbar__copy-btn {
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+.app-topbar__copied {
+  color: var(--ink-soft);
+}
+
 .app-offline-banner {
   background: var(--owed-red-soft);
   color: var(--owed-red);
