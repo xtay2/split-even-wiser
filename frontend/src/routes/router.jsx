@@ -5,6 +5,7 @@ import LoginPage from '../pages/LoginPage'
 import LoginVerifyPage from '../pages/LoginVerifyPage'
 import ProfilePage from '../pages/ProfilePage'
 import FriendsPage from '../pages/FriendsPage'
+import AddFriendToGroupPage from '../pages/AddFriendToGroupPage'
 import GroupsPage from '../pages/GroupsPage'
 import GroupDetailPage from '../pages/GroupDetailPage'
 import ExpenseFormPage from '../pages/ExpenseFormPage'
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
           { index: true, element: <Navigate to="/groups" replace /> },
           { path: 'profile', element: <ProfilePage /> },
           { path: 'friends', element: <FriendsPage /> },
+          { path: 'friends/:friendshipId/add-to-group', element: <AddFriendToGroupPage /> },
           { path: 'groups', element: <GroupsPage /> },
           { path: 'groups/:groupId', element: <GroupDetailPage /> },
           { path: 'groups/:groupId/expenses/new', element: <ExpenseFormPage /> },

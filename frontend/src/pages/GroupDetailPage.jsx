@@ -10,6 +10,7 @@ import {
   useLeaveGroupMutation,
   useCreateSettlementMutation,
 } from '../api/groupsApi'
+import { useGetFriendsQuery } from '../api/friendsApi'
 import { selectCurrentUser } from '../features/auth/authSlice'
 import useOnlineStatus from '../features/offline/useOnlineStatus'
 import { queueOfflineAction, itemRetried, itemDiscarded, selectQueueItems } from '../features/offline/offlineQueueSlice'
@@ -28,6 +29,7 @@ export default function GroupDetailPage() {
   const { data: balances = [] } = useGetBalancesQuery(groupId)
   const { data: activity = [] } = useGetActivityQuery(groupId)
   const { data: expenses = [] } = useGetExpensesQuery(groupId)
+  const { data: friends = [] } = useGetFriendsQuery()
 
   const [addMember, { isLoading: isAdding, error: addError }] = useAddGroupMemberMutation()
   const [leaveGroup, { isLoading: isLeaving, error: leaveError }] = useLeaveGroupMutation()
@@ -35,6 +37,7 @@ export default function GroupDetailPage() {
 
   const [memberIdentifier, setMemberIdentifier] = useState('')
   const [showAddMember, setShowAddMember] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(false)
 
   if (!group) {
     return isOnline ? null : (
@@ -44,6 +47,17 @@ export default function GroupDetailPage() {
 
   const membersById = Object.fromEntries(group.members.map((member) => [member.id, member]))
   const nameFor = (userId) => (userId === currentUser.id ? 'You' : `@${membersById[userId]?.username ?? '?'}`)
+
+  const memberQuery = memberIdentifier.trim().toLowerCase()
+  const friendSuggestions = memberQuery
+    ? friends
+        .filter(({ user }) => !membersById[user.id])
+        .filter(
+          ({ user }) =>
+            user.username.toLowerCase().includes(memberQuery) || user.email.toLowerCase().includes(memberQuery),
+        )
+        .slice(0, 5)
+    : []
 
   const myBalances = balances.filter(
     (transaction) => transaction.from_user_id === currentUser.id || transaction.to_user_id === currentUser.id,
@@ -233,13 +247,41 @@ export default function GroupDetailPage() {
         {!isOnline && <p className="expense-form-offline-note">Adding members requires an internet connection.</p>}
         {showAddMember && (
           <form onSubmit={handleAddMember} className="friends-add-form">
-            <input
-              value={memberIdentifier}
-              onChange={(event) => setMemberIdentifier(event.target.value)}
-              placeholder="username or email"
-              className="friends-add-input"
-              required
-            />
+            <div className="member-suggest">
+              <input
+                value={memberIdentifier}
+                onChange={(event) => {
+                  setMemberIdentifier(event.target.value)
+                  setShowSuggestions(true)
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                placeholder="username or email"
+                className="friends-add-input"
+                autoComplete="off"
+                required
+              />
+              {showSuggestions && friendSuggestions.length > 0 && (
+                <ul className="member-suggest-list">
+                  {friendSuggestions.map(({ friendship_id, user }) => (
+                    <li key={friendship_id}>
+                      <button
+                        type="button"
+                        className="member-suggest-item"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => {
+                          setMemberIdentifier(user.username)
+                          setShowSuggestions(false)
+                        }}
+                      >
+                        <span className="member-suggest-item__name">@{user.username}</span>
+                        <span className="member-suggest-item__email">{user.email}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             <button type="submit" className="friends-add-btn" disabled={isAdding || !memberIdentifier}>
               {isAdding ? '…' : 'Add'}
             </button>

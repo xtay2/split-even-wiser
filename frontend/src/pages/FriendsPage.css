@@ -92,3 +92,30 @@
   color: var(--stamp-gold);
   font-weight: 600;
 }
+
+.friends-addgroup-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: none;
+  color: var(--ledger-green);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.friends-addgroup-btn svg {
+  fill: var(--ink-soft);
+}
+
+.friends-addgroup-btn:hover {
+  background: var(--ledger-green-soft);
+  border-color: var(--ledger-green);
+}
+
+.friends-addgroup-btn:hover svg {
+  fill: var(--ledger-green);
+}

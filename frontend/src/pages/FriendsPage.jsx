@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import {
   useGetFriendsQuery,
   useGetFriendRequestsQuery,
@@ -8,6 +9,7 @@ import {
   useRemoveFriendMutation,
 } from '../api/friendsApi'
 import PersonRow from '../components/PersonRow'
+import { GroupAddIcon } from '../components/icons/GroupAddIcon'
 import './FriendsPage.css'
 
 export default function FriendsPage() {
@@ -106,6 +108,14 @@ export default function FriendsPage() {
           <ul className="friends-list">
             {friends.map((friend) => (
               <PersonRow key={friend.friendship_id} person={friend.user}>
+                <Link
+                  to={`/friends/${friend.friendship_id}/add-to-group`}
+                  className="friends-addgroup-btn"
+                  aria-label={`Add @${friend.user.username} to a group`}
+                  title="Add to group"
+                >
+                  <GroupAddIcon fontSizePx={18}/>
+                </Link>
                 <button
                   type="button"
                   className="friends-remove-btn"

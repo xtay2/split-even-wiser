@@ -1,0 +1,57 @@
+.add-to-group-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.add-to-group-back {
+  align-self: flex-start;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.add-to-group-title {
+  font-size: 1.3rem;
+}
+
+.add-to-group-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.add-to-group-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--ledger-green);
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.add-to-group-card:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+
+.add-to-group-card__name {
+  font-weight: 700;
+}
+
+.add-to-group-card__status {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ledger-green);
+  flex-shrink: 0;
+}
