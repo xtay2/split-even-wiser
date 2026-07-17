@@ -1,0 +1,89 @@
+.edit-field-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(31, 42, 36, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  z-index: 100;
+}
+
+.edit-field-dialog {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(31, 42, 36, 0.22);
+  padding: 1.1rem;
+  width: 100%;
+  max-width: 340px;
+}
+
+.edit-field-dialog__title {
+  font-size: 1.05rem;
+  margin: 0 0 0.75rem;
+}
+
+.edit-field-dialog__form {
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-field-dialog__label {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  margin-bottom: 0.35rem;
+}
+
+.edit-field-dialog__input {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+  width: 100%;
+}
+
+.edit-field-dialog__error {
+  color: var(--owed-red);
+  font-size: 0.8rem;
+  margin: 0.5rem 0 0;
+}
+
+.edit-field-dialog__hint {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  margin: 0.5rem 0 0;
+}
+
+.edit-field-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.edit-field-dialog__cancel-btn,
+.edit-field-dialog__save-btn {
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.edit-field-dialog__cancel-btn {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.edit-field-dialog__save-btn {
+  background: var(--ledger-green);
+  border: 1px solid var(--ledger-green);
+  color: var(--paper-raised);
+}
+
+.edit-field-dialog__save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

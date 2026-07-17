@@ -5,10 +5,12 @@ import {
   useGetMeQuery,
   useUpdateMeMutation,
   useUploadAvatarMutation,
+  useRequestEmailChangeMutation,
   useLogoutMutation,
 } from '../api/authApi'
 import { loggedOut, selectCurrentUser, userUpdated } from '../features/auth/authSlice'
 import { isPushSupported, usePushSubscription } from '../features/push/usePushSubscription'
+import EditFieldDialog from '../components/EditFieldDialog'
 import './ProfilePage.css'
 
 const PUSH_STATUS_LABEL = {
@@ -24,27 +26,60 @@ export default function ProfilePage() {
   const { data: user = cachedUser } = useGetMeQuery()
   const [updateMe, { isLoading: isSaving }] = useUpdateMeMutation()
   const [uploadAvatar, { isLoading: isUploading }] = useUploadAvatarMutation()
+  const [requestEmailChange, { isLoading: isSendingEmailChange }] = useRequestEmailChangeMutation()
   const [logout] = useLogoutMutation()
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
 
+  const [usernameDialogOpen, setUsernameDialogOpen] = useState(false)
   const [username, setUsername] = useState(user?.username ?? '')
-  const [editing, setEditing] = useState(false)
-  const [error, setError] = useState(null)
+  const [usernameError, setUsernameError] = useState(null)
+
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false)
+  const [email, setEmail] = useState(user?.email ?? '')
+  const [emailError, setEmailError] = useState(null)
+  const [pendingEmail, setPendingEmail] = useState(null)
+
+  const [avatarError, setAvatarError] = useState(null)
+
   const { status: pushStatus, enable: enablePush } = usePushSubscription()
 
   if (!user) return null
 
+  function openUsernameDialog() {
+    setUsername(user.username)
+    setUsernameError(null)
+    setUsernameDialogOpen(true)
+  }
+
+  function openEmailDialog() {
+    setEmail(user.email)
+    setEmailError(null)
+    setEmailDialogOpen(true)
+  }
+
   async function handleSaveUsername(event) {
     event.preventDefault()
-    setError(null)
+    setUsernameError(null)
     try {
       const updated = await updateMe({ username }).unwrap()
       dispatch(userUpdated({ user: updated }))
-      setEditing(false)
+      setUsernameDialogOpen(false)
     } catch (err) {
-      setError(err.data?.errors?.username?.[0] ?? 'Could not save username.')
+      setUsernameError(err.data?.errors?.username?.[0] ?? 'Could not save username.')
+    }
+  }
+
+  async function handleRequestEmailChange(event) {
+    event.preventDefault()
+    setEmailError(null)
+    try {
+      await requestEmailChange(email).unwrap()
+      setPendingEmail(email)
+      setEmailDialogOpen(false)
+    } catch (err) {
+      setEmailError(err.data?.errors?.email?.[0] ?? 'Could not send confirmation email.')
     }
   }
 
@@ -52,14 +87,14 @@ export default function ProfilePage() {
     const file = event.target.files?.[0]
     if (!file) return
 
-    setError(null)
+    setAvatarError(null)
     const formData = new FormData()
     formData.append('avatar', file)
     try {
       const updated = await uploadAvatar(formData).unwrap()
       dispatch(userUpdated({ user: updated }))
     } catch (err) {
-      setError(err.data?.errors?.avatar?.[0] ?? 'Could not upload photo.')
+      setAvatarError(err.data?.errors?.avatar?.[0] ?? 'Could not upload photo.')
     } finally {
       event.target.value = ''
     }
@@ -95,50 +130,31 @@ export default function ProfilePage() {
           onChange={handleAvatarChange}
           hidden
         />
+        {avatarError && <p className="profile-error">{avatarError}</p>}
       </div>
 
       <dl className="profile-fields">
         <div className="profile-field">
           <dt>Username</dt>
           <dd>
-            {editing ? (
-              <form onSubmit={handleSaveUsername} className="profile-username-form">
-                <input
-                  value={username}
-                  onChange={(event) => setUsername(event.target.value)}
-                  minLength={3}
-                  maxLength={30}
-                  pattern="[a-zA-Z0-9_.]+"
-                  autoFocus
-                  className="profile-input"
-                />
-                <button type="submit" disabled={isSaving} className="profile-save-btn">
-                  Save
-                </button>
-                <button
-                  type="button"
-                  className="profile-cancel-btn"
-                  onClick={() => {
-                    setEditing(false)
-                    setUsername(user.username)
-                    setError(null)
-                  }}
-                >
-                  Cancel
-                </button>
-              </form>
-            ) : (
-              <button type="button" className="profile-edit-btn" onClick={() => setEditing(true)}>
-                @{user.username}
-              </button>
-            )}
-            {error && <p className="profile-error">{error}</p>}
+            <button type="button" className="profile-edit-btn" onClick={openUsernameDialog}>
+              @{user.username}
+            </button>
           </dd>
         </div>
 
         <div className="profile-field">
           <dt>Email</dt>
-          <dd className="amount">{user.email}</dd>
+          <dd>
+            <button type="button" className="profile-edit-btn amount" onClick={openEmailDialog}>
+              {user.email}
+            </button>
+            {pendingEmail && (
+              <p className="profile-hint">
+                Confirmation link sent to {pendingEmail} — check your inbox to finish the change.
+              </p>
+            )}
+          </dd>
         </div>
       </dl>
 
@@ -156,6 +172,34 @@ export default function ProfilePage() {
       <button type="button" className="profile-logout-btn" onClick={handleLogout}>
         Log out
       </button>
+
+      <EditFieldDialog
+        open={usernameDialogOpen}
+        title="Change username"
+        label="Username"
+        value={username}
+        onChange={(event) => setUsername(event.target.value)}
+        onSubmit={handleSaveUsername}
+        onCancel={() => setUsernameDialogOpen(false)}
+        error={usernameError}
+        isSaving={isSaving}
+        inputProps={{ minLength: 3, maxLength: 30, pattern: '[a-zA-Z0-9_.]+' }}
+      />
+
+      <EditFieldDialog
+        open={emailDialogOpen}
+        title="Change email"
+        label="Email address"
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+        onSubmit={handleRequestEmailChange}
+        onCancel={() => setEmailDialogOpen(false)}
+        error={emailError}
+        hint="We'll send a confirmation link to the new address before it takes effect."
+        isSaving={isSendingEmailChange}
+        submitLabel="Send link"
+        inputProps={{ type: 'email' }}
+      />
     </div>
   )
 }

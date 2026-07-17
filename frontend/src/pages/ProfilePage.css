@@ -83,40 +83,14 @@
   cursor: pointer;
 }
 
-.profile-username-form {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.profile-input {
-  padding: 0.35rem 0.5rem;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  width: 8rem;
-}
-
-.profile-save-btn,
-.profile-cancel-btn {
-  border: none;
-  border-radius: 4px;
-  padding: 0.35rem 0.6rem;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-.profile-save-btn {
-  background: var(--ledger-green);
-  color: #fff;
-}
-
-.profile-cancel-btn {
-  background: none;
-  color: var(--ink-soft);
-}
-
 .profile-error {
   color: var(--owed-red);
+  font-size: 0.8rem;
+  margin: 0.35rem 0 0;
+}
+
+.profile-hint {
+  color: var(--ink-soft);
   font-size: 0.8rem;
   margin: 0.35rem 0 0;
 }

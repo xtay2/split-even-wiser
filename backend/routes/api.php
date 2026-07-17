@@ -20,6 +20,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [ProfileController::class, 'show']);
     Route::patch('/me', [ProfileController::class, 'update']);
     Route::post('/me/avatar', [ProfileController::class, 'uploadAvatar']);
+    Route::post('/me/email', [ProfileController::class, 'requestEmailChange'])
+        ->middleware('throttle:6,1');
+    Route::post('/me/email/confirm', [ProfileController::class, 'confirmEmailChange']);
 
     Route::get('/friends', [FriendshipController::class, 'index']);
     Route::get('/friends/requests', [FriendshipController::class, 'requests']);

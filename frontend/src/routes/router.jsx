@@ -4,6 +4,7 @@ import RequireAuth from '../components/RequireAuth'
 import LoginPage from '../pages/LoginPage'
 import LoginVerifyPage from '../pages/LoginVerifyPage'
 import ProfilePage from '../pages/ProfilePage'
+import EmailChangeVerifyPage from '../pages/EmailChangeVerifyPage'
 import FriendsPage from '../pages/FriendsPage'
 import AddFriendToGroupPage from '../pages/AddFriendToGroupPage'
 import GroupsPage from '../pages/GroupsPage'
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="/groups" replace /> },
           { path: 'profile', element: <ProfilePage /> },
+          { path: 'profile/email/verify', element: <EmailChangeVerifyPage /> },
           { path: 'friends', element: <FriendsPage /> },
           { path: 'friends/:friendshipId/add-to-group', element: <AddFriendToGroupPage /> },
           { path: 'groups', element: <GroupsPage /> },

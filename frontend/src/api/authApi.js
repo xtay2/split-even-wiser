@@ -42,6 +42,21 @@ export const authApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Me'],
     }),
+    requestEmailChange: builder.mutation({
+      query: (email) => ({
+        url: '/me/email',
+        method: 'POST',
+        body: { email },
+      }),
+    }),
+    confirmEmailChange: builder.mutation({
+      query: ({ email, token }) => ({
+        url: '/me/email/confirm',
+        method: 'POST',
+        body: { email, token },
+      }),
+      invalidatesTags: ['Me'],
+    }),
   }),
 })
 
@@ -52,4 +67,6 @@ export const {
   useGetMeQuery,
   useUpdateMeMutation,
   useUploadAvatarMutation,
+  useRequestEmailChangeMutation,
+  useConfirmEmailChangeMutation,
 } = authApi
