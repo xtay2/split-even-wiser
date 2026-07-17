@@ -22,6 +22,11 @@
   box-sizing: border-box;
 }
 
+button {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 body {
   margin: 0;
   background: var(--paper);
