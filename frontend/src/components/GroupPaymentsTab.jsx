@@ -5,13 +5,13 @@ import { buildLedgerItems, groupItemsByMonth } from '../utils/groupLedger'
 import { PaymentsIcon } from './icons/PaymentsIcon.tsx'
 import { ReceiptLongIcon } from './icons/ReceiptLongIcon.tsx'
 
-export default function GroupExpensesTab({ hidden, groupId, nameFor, hasOtherMembers }) {
+export default function GroupPaymentsTab({ hidden, groupId, nameFor, hasOtherMembers }) {
   const navigate = useNavigate()
   const { data: expenses = [] } = useGetExpensesQuery(groupId)
   const { data: settlements = [] } = useGetSettlementsQuery(groupId)
 
   return (
-    <section hidden={hidden} className="expenses-section">
+    <section hidden={hidden} className="payments-section">
       {expenses.length === 0 && settlements.length === 0 ? (
         <p className="friends-empty">No expenses yet.</p>
       ) : (

@@ -30,7 +30,7 @@ export default function AppLayout() {
 
       {!isOnline && (
         <div className="app-offline-banner">
-          You're offline. Expenses and settlements you add now will sync automatically once you're back online.
+          You're offline. Payments you add now will sync automatically once you're back online.
         </div>
       )}
       {isOnline && pendingCount > 0 && (

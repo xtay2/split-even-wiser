@@ -7,7 +7,7 @@ import useOnlineStatus from '../features/offline/useOnlineStatus'
 import ConfirmDialog from '../components/ConfirmDialog'
 import GroupPendingSyncBanner from '../components/GroupPendingSyncBanner'
 import GroupBalancesTab from '../components/GroupBalancesTab'
-import GroupExpensesTab from '../components/GroupExpensesTab'
+import GroupPaymentsTab from '../components/GroupPaymentsTab'
 import GroupMembersTab from '../components/GroupMembersTab'
 import GroupActivityTab from '../components/GroupActivityTab'
 import { LogoutIcon } from '../components/icons/LogoutIcon.tsx'
@@ -15,7 +15,7 @@ import './GroupDetailPage.css'
 
 const TABS = [
   { key: 'balances', label: 'Balances' },
-  { key: 'expenses', label: 'Expenses' },
+  { key: 'payments', label: 'Payments' },
   { key: 'members', label: 'Members' },
   { key: 'activity', label: 'Activity' },
 ]
@@ -41,10 +41,10 @@ export default function GroupDetailPage() {
   const membersById = Object.fromEntries(group.members.map((member) => [member.id, member]))
   const nameFor = (userId) => (userId === currentUser.id ? 'You' : `@${membersById[userId]?.username ?? '?'}`)
 
-  // Nobody to split with yet — land on Members instead of an empty Expenses tab, until
+  // Nobody to split with yet — land on Members instead of an empty Payments tab, until
   // the person picks a tab themselves.
   const hasOtherMembers = group.members.length > 1
-  const effectiveTab = activeTab ?? (hasOtherMembers ? 'expenses' : 'members')
+  const effectiveTab = activeTab ?? (hasOtherMembers ? 'payments' : 'members')
 
   async function handleLeave() {
     try {
@@ -116,8 +116,8 @@ export default function GroupDetailPage() {
         currentUser={currentUser}
         nameFor={nameFor}
       />
-      <GroupExpensesTab
-        hidden={effectiveTab !== 'expenses'}
+      <GroupPaymentsTab
+        hidden={effectiveTab !== 'payments'}
         groupId={groupId}
         nameFor={nameFor}
         hasOtherMembers={hasOtherMembers}

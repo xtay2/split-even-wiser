@@ -1,7 +1,7 @@
 import { formatMonthLabel, monthKey } from './expenseDate'
 
 // Normalizes expenses and settlements into a single shape so they can be listed and
-// sorted together, newest first, in the "Expenses" tab.
+// sorted together, newest first, in the "Payments" tab.
 export function buildLedgerItems(expenses, settlements) {
   const expenseItems = expenses.map((expense) => ({
     key: `expense-${expense.id}`,
