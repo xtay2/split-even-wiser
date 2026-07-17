@@ -29,6 +29,7 @@ class SettlementController extends Controller
             'to_user_id' => ['required', 'integer', 'in:'.$activeMemberIds->implode(',')],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'currency' => ['required', 'string', 'size:3'],
+            'date' => ['nullable', 'date'],
             'client_uuid' => ['nullable', 'uuid'],
         ]);
 
@@ -53,6 +54,7 @@ class SettlementController extends Controller
             'to_user_id' => $data['to_user_id'],
             'amount' => $data['amount'],
             'currency' => strtoupper($data['currency']),
+            'date' => $data['date'] ?? now()->toDateString(),
             'created_by' => $request->user()->id,
             'client_uuid' => $data['client_uuid'] ?? null,
         ]);

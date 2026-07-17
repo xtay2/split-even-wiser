@@ -38,6 +38,37 @@ it('is idempotent when the same client_uuid is replayed, for offline sync retrie
     expect(Settlement::count())->toBe(1);
 });
 
+it('records a partial settlement with a date, as its own ledger entry', function () {
+    $alice = User::factory()->create();
+    $bob = User::factory()->create();
+    $group = groupWithMembers($alice, $bob);
+
+    $response = $this->actingAs($alice)->postJson("/api/groups/{$group->id}/settlements", [
+        'to_user_id' => $bob->id,
+        'amount' => 4.5,
+        'currency' => 'EUR',
+        'date' => '2026-07-16',
+    ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('date', '2026-07-16')
+        ->assertJsonPath('amount', '4.50');
+});
+
+it('defaults date when a settlement is recorded without them', function () {
+    $alice = User::factory()->create();
+    $bob = User::factory()->create();
+    $group = groupWithMembers($alice, $bob);
+
+    $response = $this->actingAs($alice)->postJson("/api/groups/{$group->id}/settlements", [
+        'to_user_id' => $bob->id,
+        'amount' => 10,
+        'currency' => 'EUR',
+    ]);
+
+    expect($response->json('date'))->not->toBeNull();
+});
+
 it('rejects settling a debt with yourself', function () {
     $alice = User::factory()->create();
     $group = groupWithMembers($alice);

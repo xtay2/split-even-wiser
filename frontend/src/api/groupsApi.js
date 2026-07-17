@@ -91,6 +91,10 @@ export const groupsApi = apiSlice.injectEndpoints({
         { type: 'Activity', id: groupId },
       ],
     }),
+    getSettlements: builder.query({
+      query: (groupId) => `/groups/${groupId}/settlements`,
+      providesTags: (result, error, groupId) => [{ type: 'Settlements', id: groupId }],
+    }),
     createSettlement: builder.mutation({
       query: ({ groupId, ...body }) => ({
         url: `/groups/${groupId}/settlements`,
@@ -98,6 +102,7 @@ export const groupsApi = apiSlice.injectEndpoints({
         body,
       }),
       invalidatesTags: (result, error, { groupId }) => [
+        { type: 'Settlements', id: groupId },
         { type: 'Balances', id: groupId },
         { type: 'Activity', id: groupId },
       ],
@@ -120,5 +125,6 @@ export const {
   useCreateExpenseMutation,
   useUpdateExpenseMutation,
   useDeleteExpenseMutation,
+  useGetSettlementsQuery,
   useCreateSettlementMutation,
 } = groupsApi

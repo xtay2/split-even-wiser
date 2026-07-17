@@ -15,6 +15,7 @@ class Settlement extends Model
         'to_user_id',
         'amount',
         'currency',
+        'date',
         'created_by',
         'client_uuid',
     ];
@@ -23,6 +24,7 @@ class Settlement extends Model
     {
         return [
             'amount' => 'decimal:2',
+            'date' => 'date:Y-m-d',
             'created_at' => 'datetime',
         ];
     }

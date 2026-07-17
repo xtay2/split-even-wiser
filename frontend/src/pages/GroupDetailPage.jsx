@@ -1,23 +1,16 @@
 import { useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router'
-import { useDispatch, useSelector } from 'react-redux'
-import {
-  useGetGroupQuery,
-  useGetBalancesQuery,
-  useGetActivityQuery,
-  useGetExpensesQuery,
-  useAddGroupMemberMutation,
-  useLeaveGroupMutation,
-  useCreateSettlementMutation,
-} from '../api/groupsApi'
-import { useGetFriendsQuery } from '../api/friendsApi'
+import { useParams, useNavigate } from 'react-router'
+import { useSelector } from 'react-redux'
+import { useGetGroupQuery, useLeaveGroupMutation } from '../api/groupsApi'
 import { selectCurrentUser } from '../features/auth/authSlice'
 import useOnlineStatus from '../features/offline/useOnlineStatus'
-import { queueOfflineAction, itemRetried, itemDiscarded, selectQueueItems } from '../features/offline/offlineQueueSlice'
-import ActivityFeed from '../components/ActivityFeed'
 import ConfirmDialog from '../components/ConfirmDialog'
+import GroupPendingSyncBanner from '../components/GroupPendingSyncBanner'
+import GroupBalancesTab from '../components/GroupBalancesTab'
+import GroupExpensesTab from '../components/GroupExpensesTab'
+import GroupMembersTab from '../components/GroupMembersTab'
+import GroupActivityTab from '../components/GroupActivityTab'
 import { LogoutIcon } from '../components/icons/LogoutIcon.tsx'
-import { formatExpenseDate, formatMonthLabel, monthKey } from '../utils/expenseDate'
 import './GroupDetailPage.css'
 
 const TABS = [
@@ -27,48 +20,15 @@ const TABS = [
   { key: 'activity', label: 'Activity' },
 ]
 
-// Segments the list into contiguous month blocks, newest expense date first.
-function groupExpensesByMonth(expenses) {
-  const sorted = [...expenses].sort((a, b) =>
-    b.current_version.date.localeCompare(a.current_version.date),
-  )
-
-  const groups = []
-  let currentGroup = null
-
-  for (const expense of sorted) {
-    const key = monthKey(expense.current_version.date)
-    if (!currentGroup || currentGroup.key !== key) {
-      currentGroup = { key, label: formatMonthLabel(expense.current_version.date), expenses: [] }
-      groups.push(currentGroup)
-    }
-    currentGroup.expenses.push(expense)
-  }
-
-  return groups
-}
-
 export default function GroupDetailPage() {
   const { groupId } = useParams()
   const navigate = useNavigate()
-  const dispatch = useDispatch()
   const currentUser = useSelector(selectCurrentUser)
   const isOnline = useOnlineStatus()
-  const queueItems = useSelector(selectQueueItems)
 
   const { data: group } = useGetGroupQuery(groupId)
-  const { data: balances = [] } = useGetBalancesQuery(groupId)
-  const { data: activity = [] } = useGetActivityQuery(groupId)
-  const { data: expenses = [] } = useGetExpensesQuery(groupId)
-  const { data: friends = [] } = useGetFriendsQuery()
-
-  const [addMember, { isLoading: isAdding, error: addError }] = useAddGroupMemberMutation()
   const [leaveGroup, { isLoading: isLeaving, error: leaveError }] = useLeaveGroupMutation()
-  const [createSettlement] = useCreateSettlementMutation()
 
-  const [memberIdentifier, setMemberIdentifier] = useState('')
-  const [showAddMember, setShowAddMember] = useState(false)
-  const [showSuggestions, setShowSuggestions] = useState(false)
   const [activeTab, setActiveTab] = useState('expenses')
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
 
@@ -81,83 +41,12 @@ export default function GroupDetailPage() {
   const membersById = Object.fromEntries(group.members.map((member) => [member.id, member]))
   const nameFor = (userId) => (userId === currentUser.id ? 'You' : `@${membersById[userId]?.username ?? '?'}`)
 
-  const memberQuery = memberIdentifier.trim().toLowerCase()
-  const friendSuggestions = memberQuery
-    ? friends
-        .filter(({ user }) => !membersById[user.id])
-        .filter(
-          ({ user }) =>
-            user.username.toLowerCase().includes(memberQuery) || user.email.toLowerCase().includes(memberQuery),
-        )
-        .slice(0, 5)
-    : []
-
-  const myBalances = balances.filter(
-    (transaction) => transaction.from_user_id === currentUser.id || transaction.to_user_id === currentUser.id,
-  )
-  const otherBalances = balances.filter(
-    (transaction) => transaction.from_user_id !== currentUser.id && transaction.to_user_id !== currentUser.id,
-  )
-
-  const pendingItems = queueItems.filter((item) => String(item.groupId) === String(groupId))
-  const pendingExpenses = pendingItems.filter((item) => item.type === 'expense')
-  const pendingSettlements = pendingItems.filter((item) => item.type === 'settlement')
-  const pendingSettlementTargets = new Set(
-    pendingSettlements.filter((item) => item.status === 'pending').map((item) => item.payload.to_user_id),
-  )
-
-  async function handleAddMember(event) {
-    event.preventDefault()
-    try {
-      await addMember({ groupId, identifier: memberIdentifier }).unwrap()
-      setMemberIdentifier('')
-      setShowAddMember(false)
-    } catch {
-      // error surfaced below
-    }
-  }
-
   async function handleLeave() {
     try {
       await leaveGroup({ groupId, userId: currentUser.id }).unwrap()
       navigate('/groups')
     } catch {
       setShowLeaveConfirm(false)
-    }
-  }
-
-  async function handleSettle(transaction) {
-    const payload = {
-      to_user_id: transaction.to_user_id,
-      amount: transaction.amount,
-      currency: transaction.currency,
-    }
-
-    if (!isOnline) {
-      dispatch(
-        queueOfflineAction({
-          type: 'settlement',
-          groupId,
-          payload,
-          label: `Settle up with ${nameFor(transaction.to_user_id)}`,
-        }),
-      )
-      return
-    }
-
-    try {
-      await createSettlement({ groupId, ...payload }).unwrap()
-    } catch (settleError) {
-      if (settleError?.status === 'FETCH_ERROR') {
-        dispatch(
-          queueOfflineAction({
-            type: 'settlement',
-            groupId,
-            payload,
-            label: `Settle up with ${nameFor(transaction.to_user_id)}`,
-          }),
-        )
-      }
     }
   }
 
@@ -214,202 +103,17 @@ export default function GroupDetailPage() {
         ))}
       </nav>
 
-      {pendingItems.length > 0 && (
-        <section>
-          <h2 className="friends-section-title">Pending sync</h2>
-          <ul className="pending-sync-list">
-            {[...pendingExpenses, ...pendingSettlements].map((item) => (
-              <li key={item.id} className="pending-sync-row">
-                <span className="pending-sync-row__label">{item.label}</span>
-                {item.status === 'error' ? (
-                  <span className="pending-sync-row__actions">
-                    <span className="pending-sync-row__error">{item.error}</span>
-                    <button type="button" onClick={() => dispatch(itemRetried({ id: item.id }))}>
-                      Retry
-                    </button>
-                    <button type="button" onClick={() => dispatch(itemDiscarded({ id: item.id }))}>
-                      Discard
-                    </button>
-                  </span>
-                ) : (
-                  <span className="pending-sync-row__status">Waiting to sync…</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <GroupPendingSyncBanner groupId={groupId} />
 
-      <section hidden={activeTab !== 'balances'}>
-        {myBalances.length === 0 && otherBalances.length === 0 ? (
-          <p className="friends-empty">Everyone's settled up.</p>
-        ) : (
-          <ul className="balance-list">
-            {myBalances.map((transaction, index) => {
-              const youOwe = transaction.from_user_id === currentUser.id
-              return (
-                <li key={index} className="balance-row">
-                  <span>
-                    {youOwe ? (
-                      <>You owe <strong>{nameFor(transaction.to_user_id)}</strong></>
-                    ) : (
-                      <><strong>{nameFor(transaction.from_user_id)}</strong> owes you</>
-                    )}
-                  </span>
-                  <span className={`amount ${youOwe ? 'amount--owed' : 'amount--credit'}`}>
-                    {transaction.amount} {transaction.currency}
-                  </span>
-                  {youOwe && (
-                    <button
-                      type="button"
-                      className="balance-settle-btn"
-                      onClick={() => handleSettle(transaction)}
-                      disabled={pendingSettlementTargets.has(transaction.to_user_id)}
-                    >
-                      {pendingSettlementTargets.has(transaction.to_user_id) ? 'Queued' : 'Mark settled'}
-                    </button>
-                  )}
-                </li>
-              )
-            })}
-            {otherBalances.map((transaction, index) => (
-              <li key={`other-${index}`} className="balance-row balance-row--muted">
-                <span>
-                  {nameFor(transaction.from_user_id)} owes {nameFor(transaction.to_user_id)}
-                </span>
-                <span className="amount">{transaction.amount} {transaction.currency}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section hidden={activeTab !== 'expenses'}>
-        <div className="groups-header groups-header--end">
-          <Link to={`/groups/${groupId}/expenses/new`} className="groups-new-btn">
-            + New expense
-          </Link>
-        </div>
-        {expenses.length === 0 ? (
-          <p className="friends-empty">No expenses yet.</p>
-        ) : (
-          groupExpensesByMonth(expenses).map((group) => (
-            <div key={group.key} className="expense-month-group">
-              <h3 className="expense-month-heading">{group.label}</h3>
-              <ul className="expense-list">
-                {group.expenses.map((expense) => {
-                  const editPath = `/groups/${groupId}/expenses/${expense.id}`
-                  return (
-                    <li
-                      key={expense.id}
-                      className="expense-row"
-                      onClick={() => navigate(editPath)}
-                    >
-                      <button
-                        type="button"
-                        className="expense-row__date"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          navigate(`${editPath}?focus=date`)
-                        }}
-                      >
-                        {formatExpenseDate(expense.current_version.date)}
-                      </button>
-                      <button
-                        type="button"
-                        className="expense-row__title"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          navigate(`${editPath}?focus=title`)
-                        }}
-                      >
-                        {expense.current_version.title}
-                      </button>
-                      <span className="expense-row__leader" aria-hidden="true" />
-                      <button
-                        type="button"
-                        className="amount expense-row__amount"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          navigate(`${editPath}?focus=amount`)
-                        }}
-                      >
-                        {expense.current_version.amount} {expense.current_version.currency}
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-          ))
-        )}
-      </section>
-
-      <section hidden={activeTab !== 'members'}>
-        <div className="groups-header groups-header--end">
-          <button
-            type="button"
-            className="groups-new-btn"
-            onClick={() => setShowAddMember((v) => !v)}
-            disabled={!isOnline}
-          >
-            {showAddMember ? 'Cancel' : '+ Add member'}
-          </button>
-        </div>
-        {!isOnline && <p className="expense-form-offline-note">Adding members requires an internet connection.</p>}
-        {showAddMember && (
-          <form onSubmit={handleAddMember} className="friends-add-form">
-            <div className="member-suggest">
-              <input
-                value={memberIdentifier}
-                onChange={(event) => {
-                  setMemberIdentifier(event.target.value)
-                  setShowSuggestions(true)
-                }}
-                onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                placeholder="username or email"
-                className="friends-add-input"
-                autoComplete="off"
-                required
-              />
-              {showSuggestions && friendSuggestions.length > 0 && (
-                <ul className="member-suggest-list">
-                  {friendSuggestions.map(({ friendship_id, user }) => (
-                    <li key={friendship_id}>
-                      <button
-                        type="button"
-                        className="member-suggest-item"
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => {
-                          setMemberIdentifier(user.username)
-                          setShowSuggestions(false)
-                        }}
-                      >
-                        <span className="member-suggest-item__name">@{user.username}</span>
-                        <span className="member-suggest-item__email">{user.email}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <button type="submit" className="friends-add-btn" disabled={isAdding || !memberIdentifier}>
-              {isAdding ? '…' : 'Add'}
-            </button>
-          </form>
-        )}
-        {addError && <p className="friends-error">{addError.data?.errors?.identifier?.[0] ?? 'Could not add member.'}</p>}
-        <ul className="member-list">
-          {group.members.map((member) => (
-            <li key={member.id} className="member-chip">@{member.username}</li>
-          ))}
-        </ul>
-      </section>
-
-      <section hidden={activeTab !== 'activity'}>
-        <ActivityFeed activity={activity} currentUserId={currentUser.id} />
-      </section>
+      <GroupBalancesTab
+        hidden={activeTab !== 'balances'}
+        groupId={groupId}
+        currentUser={currentUser}
+        nameFor={nameFor}
+      />
+      <GroupExpensesTab hidden={activeTab !== 'expenses'} groupId={groupId} nameFor={nameFor} />
+      <GroupMembersTab hidden={activeTab !== 'members'} groupId={groupId} group={group} isOnline={isOnline} />
+      <GroupActivityTab hidden={activeTab !== 'activity'} groupId={groupId} currentUserId={currentUser.id} />
     </div>
   )
 }

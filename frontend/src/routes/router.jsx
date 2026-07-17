@@ -9,6 +9,7 @@ import AddFriendToGroupPage from '../pages/AddFriendToGroupPage'
 import GroupsPage from '../pages/GroupsPage'
 import GroupDetailPage from '../pages/GroupDetailPage'
 import ExpenseFormPage from '../pages/ExpenseFormPage'
+import SettlementFormPage from '../pages/SettlementFormPage.jsx'
 import NotFoundPage from '../pages/NotFoundPage'
 
 export const router = createBrowserRouter([
@@ -34,6 +35,7 @@ export const router = createBrowserRouter([
           { path: 'groups/:groupId', element: <GroupDetailPage /> },
           { path: 'groups/:groupId/expenses/new', element: <ExpenseFormPage /> },
           { path: 'groups/:groupId/expenses/:expenseId', element: <ExpenseFormPage /> },
+          { path: 'groups/:groupId/settlements/new', element: <SettlementFormPage /> },
         ],
       },
     ],
