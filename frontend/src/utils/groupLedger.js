@@ -6,6 +6,7 @@ export function buildLedgerItems(expenses, settlements) {
   const expenseItems = expenses.map((expense) => ({
     key: `expense-${expense.id}`,
     kind: 'expense',
+    created_at: expense.created_at,
     date: expense.current_version.date,
     amount: expense.current_version.amount,
     currency: expense.current_version.currency,
@@ -15,6 +16,7 @@ export function buildLedgerItems(expenses, settlements) {
   const paymentItems = settlements.map((settlement) => ({
     key: `settlement-${settlement.id}`,
     kind: 'settlement',
+    created_at: settlement.created_at,
     date: settlement.date,
     amount: settlement.amount,
     currency: settlement.currency,
@@ -26,7 +28,12 @@ export function buildLedgerItems(expenses, settlements) {
 
 // Segments the list into contiguous month blocks, newest item date first.
 export function groupItemsByMonth(items) {
-  const sorted = [...items].sort((a, b) => b.date.localeCompare(a.date))
+  const sorted = [...items].sort((a, b) => {
+    const dateComp = b.date.localeCompare(a.date)
+    return dateComp === 0
+      ? b.created_at.localeCompare(a.created_at)
+      : dateComp;
+  });
 
   const groups = []
   let currentGroup = null
