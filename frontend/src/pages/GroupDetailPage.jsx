@@ -15,8 +15,17 @@ import { selectCurrentUser } from '../features/auth/authSlice'
 import useOnlineStatus from '../features/offline/useOnlineStatus'
 import { queueOfflineAction, itemRetried, itemDiscarded, selectQueueItems } from '../features/offline/offlineQueueSlice'
 import ActivityFeed from '../components/ActivityFeed'
+import ConfirmDialog from '../components/ConfirmDialog'
+import { LogoutIcon } from '../components/icons/LogoutIcon.tsx'
 import { formatExpenseDate, formatMonthLabel, monthKey } from '../utils/expenseDate'
 import './GroupDetailPage.css'
+
+const TABS = [
+  { key: 'balances', label: 'Balances' },
+  { key: 'expenses', label: 'Expenses' },
+  { key: 'members', label: 'Members' },
+  { key: 'activity', label: 'Activity' },
+]
 
 // Segments the list into contiguous month blocks, newest expense date first.
 function groupExpensesByMonth(expenses) {
@@ -60,6 +69,8 @@ export default function GroupDetailPage() {
   const [memberIdentifier, setMemberIdentifier] = useState('')
   const [showAddMember, setShowAddMember] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [activeTab, setActiveTab] = useState('expenses')
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
 
   if (!group) {
     return isOnline ? null : (
@@ -111,7 +122,7 @@ export default function GroupDetailPage() {
       await leaveGroup({ groupId, userId: currentUser.id }).unwrap()
       navigate('/groups')
     } catch {
-      // error surfaced below
+      setShowLeaveConfirm(false)
     }
   }
 
@@ -153,9 +164,55 @@ export default function GroupDetailPage() {
   return (
     <div className="group-detail-screen">
       <header className="group-detail-header">
-        <h1 className="group-detail-title">{group.name}</h1>
-        {group.description && <p className="group-detail-description">{group.description}</p>}
+        <div className="group-detail-header__row">
+          <div className="group-detail-header__text">
+            <h1 className="group-detail-title">{group.name}</h1>
+            {group.description && <p className="group-detail-description">{group.description}</p>}
+          </div>
+          <button
+            type="button"
+            className="group-leave-icon-btn"
+            onClick={() => setShowLeaveConfirm(true)}
+            disabled={isLeaving || !isOnline}
+            aria-label="Leave group"
+            title="Leave group"
+          >
+            <LogoutIcon />
+          </button>
+        </div>
+        {!isOnline && (
+          <p className="friends-error group-leave-error">Leaving a group requires an internet connection.</p>
+        )}
+        {leaveError && (
+          <p className="friends-error group-leave-error">
+            {leaveError.data?.message ?? 'Could not leave the group.'}
+          </p>
+        )}
       </header>
+
+      <ConfirmDialog
+        open={showLeaveConfirm}
+        title="Leave group?"
+        message={`You'll lose access to "${group.name}" until someone adds you back.`}
+        confirmLabel="Leave group"
+        danger
+        isConfirming={isLeaving}
+        onConfirm={handleLeave}
+        onCancel={() => setShowLeaveConfirm(false)}
+      />
+
+      <nav className="group-tabs">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            className={`group-tabs__item${activeTab === tab.key ? ' is-active' : ''}`}
+            onClick={() => setActiveTab(tab.key)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
 
       {pendingItems.length > 0 && (
         <section>
@@ -183,8 +240,7 @@ export default function GroupDetailPage() {
         </section>
       )}
 
-      <section>
-        <h2 className="friends-section-title">Balances</h2>
+      <section hidden={activeTab !== 'balances'}>
         {myBalances.length === 0 && otherBalances.length === 0 ? (
           <p className="friends-empty">Everyone's settled up.</p>
         ) : (
@@ -228,9 +284,8 @@ export default function GroupDetailPage() {
         )}
       </section>
 
-      <section>
-        <div className="groups-header">
-          <h2 className="friends-section-title">Expenses</h2>
+      <section hidden={activeTab !== 'expenses'}>
+        <div className="groups-header groups-header--end">
           <Link to={`/groups/${groupId}/expenses/new`} className="groups-new-btn">
             + New expense
           </Link>
@@ -290,9 +345,8 @@ export default function GroupDetailPage() {
         )}
       </section>
 
-      <section>
-        <div className="groups-header">
-          <h2 className="friends-section-title">Members</h2>
+      <section hidden={activeTab !== 'members'}>
+        <div className="groups-header groups-header--end">
           <button
             type="button"
             className="groups-new-btn"
@@ -353,22 +407,9 @@ export default function GroupDetailPage() {
         </ul>
       </section>
 
-      <section>
-        <h2 className="friends-section-title">Activity</h2>
+      <section hidden={activeTab !== 'activity'}>
         <ActivityFeed activity={activity} currentUserId={currentUser.id} />
       </section>
-
-      <button type="button" className="group-leave-btn" onClick={handleLeave} disabled={isLeaving || !isOnline}>
-        Leave group
-      </button>
-      {!isOnline && (
-        <p className="friends-error group-leave-error">Leaving a group requires an internet connection.</p>
-      )}
-      {leaveError && (
-        <p className="friends-error group-leave-error">
-          {leaveError.data?.message ?? 'Could not leave the group.'}
-        </p>
-      )}
     </div>
   )
 }

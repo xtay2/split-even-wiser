@@ -1,0 +1,1 @@
+export const LogoutIcon = () => <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h280v80H200Zm440-160-56-57 103-103H360v-80h327L584-623l56-57 200 200-200 200Z"/></svg>
