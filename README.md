@@ -53,6 +53,64 @@ container runs `npm install && npm run dev` on boot. Both are safe to restart fr
 docker compose exec app ./vendor/bin/pest
 ```
 
+## Deploying to production
+
+There's no CI/CD pipeline — deploys are a manual `git pull` on the VPS followed by a couple of
+`docker compose` commands using the prod overlay (`docker-compose.prod.yml`). Always pass both
+compose files together; the base file alone starts the dev-only `frontend` vite server and skips
+`nginx`'s prod config/certbot:
+
+```
+ssh <user>@split-even-wiser.com
+cd split-even-wiser
+git pull
+```
+
+### Backend changes (Laravel API)
+
+```
+docker compose -f docker-compose.yml -f docker-compose.prod.yml restart app queue
+```
+
+`backend/` is bind-mounted into `app`/`queue`, so PHP source changes are visible immediately —
+restarting re-runs `docker/php/entrypoint.sh`, which applies pending migrations
+(`php artisan migrate --force`) and re-symlinks `public/storage`. The restart mainly matters so
+the long-lived `queue:work` process picks up the new code and so migrations actually run.
+
+If `composer.json`/`composer.lock` changed, install first (the entrypoint only runs
+`composer install` when `vendor/` is missing, which it won't be after the first deploy):
+```
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec app composer install --no-interaction --prefer-dist
+docker compose -f docker-compose.yml -f docker-compose.prod.yml restart app queue
+```
+
+If `docker/php/Dockerfile` changed (new PHP extensions/system packages), rebuild the image
+instead of just restarting:
+```
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build app queue
+```
+
+### Frontend changes (React SPA)
+
+The SPA is a static build baked into a shared volume that nginx serves from `/var/www/frontend`;
+it does not rebuild automatically on `up`:
+
+```
+docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm frontend-build
+```
+
+This runs `npm ci && npm run build` against `VITE_API_URL=https://split-even-wiser.com/api` and
+writes straight into the volume nginx reads from — no restart needed afterwards.
+
+### After deploying
+
+```
+docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f app queue nginx
+```
+
+`mailserver` and `certbot` only need touching when their own config changes — see
+`docker/mailserver/README.md` and `docker/certbot/init-letsencrypt.sh`.
+
 ## Repository layout
 
 ```
