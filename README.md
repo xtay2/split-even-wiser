@@ -14,7 +14,7 @@ debt simplification.
 
 ```
 cp backend/.env.example backend/.env
-docker compose up --build
+docker compose up -d --build
 docker compose exec app php artisan webpush:vapid
 ```
 
@@ -28,7 +28,7 @@ else in it is safe local-dev defaults out of the box.
 ## Running it
 
 ```
-docker compose up
+docker compose up -d
 ```
 
 - Frontend (PWA): http://localhost:5173
