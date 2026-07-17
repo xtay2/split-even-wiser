@@ -56,7 +56,7 @@ it('blocks leaving a group with an outstanding balance', function () {
 
     $expense = Expense::create(['group_id' => $group->id, 'created_by' => $alice->id]);
     $v1 = $expense->versions()->create([
-        'version_no' => 1, 'title' => 'Dinner', 'amount' => 20, 'currency' => 'EUR',
+        'version_no' => 1, 'title' => 'Dinner', 'amount' => 20, 'currency' => 'EUR', 'date' => '2026-07-10',
         'paid_by' => $alice->id, 'created_by' => $alice->id,
     ]);
     $v1->shares()->createMany([
@@ -76,7 +76,7 @@ it('allows leaving once the member is quitt', function () {
 
     $expense = Expense::create(['group_id' => $group->id, 'created_by' => $alice->id]);
     $v1 = $expense->versions()->create([
-        'version_no' => 1, 'title' => 'Dinner', 'amount' => 20, 'currency' => 'EUR',
+        'version_no' => 1, 'title' => 'Dinner', 'amount' => 20, 'currency' => 'EUR', 'date' => '2026-07-10',
         'paid_by' => $alice->id, 'created_by' => $alice->id,
     ]);
     $v1->shares()->createMany([

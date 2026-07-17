@@ -12,6 +12,7 @@ it('creates an expense split evenly and records it as version 1', function () {
         'title' => 'Dinner',
         'amount' => 20,
         'currency' => 'eur',
+        'date' => '2026-07-10',
         'shares' => [
             ['user_id' => $alice->id, 'amount' => 10],
             ['user_id' => $bob->id, 'amount' => 10],
@@ -21,6 +22,7 @@ it('creates an expense split evenly and records it as version 1', function () {
     $response->assertCreated()
         ->assertJsonPath('current_version.title', 'Dinner')
         ->assertJsonPath('current_version.currency', 'EUR')
+        ->assertJsonPath('current_version.date', '2026-07-10')
         ->assertJsonPath('current_version.version_no', 1)
         ->assertJsonPath('current_version.paid_by', $alice->id);
 
@@ -38,6 +40,7 @@ it('rejects an expense whose shares do not sum to the total amount', function ()
         'title' => 'Dinner',
         'amount' => 20,
         'currency' => 'EUR',
+        'date' => '2026-07-10',
         'shares' => [
             ['user_id' => $alice->id, 'amount' => 10],
             ['user_id' => $bob->id, 'amount' => 5],
@@ -54,6 +57,7 @@ it('rejects a share for a user who is not an active group member', function () {
         'title' => 'Dinner',
         'amount' => 10,
         'currency' => 'EUR',
+        'date' => '2026-07-10',
         'shares' => [['user_id' => $outsider->id, 'amount' => 10]],
     ])->assertUnprocessable()->assertJsonValidationErrors('shares.0.user_id');
 });
@@ -67,6 +71,7 @@ it('allows specifying a different payer than the creator', function () {
         'title' => 'Dinner',
         'amount' => 20,
         'currency' => 'EUR',
+        'date' => '2026-07-10',
         'paid_by' => $bob->id,
         'shares' => [
             ['user_id' => $alice->id, 'amount' => 10],
@@ -83,7 +88,7 @@ it('creates a new version on update without discarding the old one', function ()
     $group = groupWithMembers($alice, $bob);
     $expense = Expense::create(['group_id' => $group->id, 'created_by' => $alice->id]);
     $v1 = $expense->versions()->create([
-        'version_no' => 1, 'title' => 'Dinner', 'amount' => 20, 'currency' => 'EUR',
+        'version_no' => 1, 'title' => 'Dinner', 'amount' => 20, 'currency' => 'EUR', 'date' => '2026-07-10',
         'paid_by' => $alice->id, 'created_by' => $alice->id,
     ]);
     $v1->shares()->createMany([
@@ -96,6 +101,7 @@ it('creates a new version on update without discarding the old one', function ()
         'title' => 'Fancy Dinner',
         'amount' => 30,
         'currency' => 'EUR',
+        'date' => '2026-07-11',
         'shares' => [
             ['user_id' => $alice->id, 'amount' => 15],
             ['user_id' => $bob->id, 'amount' => 15],
@@ -117,7 +123,7 @@ it('exposes full version history for an expense', function () {
     $group = groupWithMembers($alice);
     $expense = Expense::create(['group_id' => $group->id, 'created_by' => $alice->id]);
     $v1 = $expense->versions()->create([
-        'version_no' => 1, 'title' => 'Dinner', 'amount' => 10, 'currency' => 'EUR',
+        'version_no' => 1, 'title' => 'Dinner', 'amount' => 10, 'currency' => 'EUR', 'date' => '2026-07-10',
         'paid_by' => $alice->id, 'created_by' => $alice->id,
     ]);
     $v1->shares()->create(['user_id' => $alice->id, 'share_amount' => 10]);
@@ -133,7 +139,7 @@ it('excludes deleted expenses from the index but soft-deletes rather than hard-d
     $group = groupWithMembers($alice);
     $expense = Expense::create(['group_id' => $group->id, 'created_by' => $alice->id]);
     $v1 = $expense->versions()->create([
-        'version_no' => 1, 'title' => 'Dinner', 'amount' => 10, 'currency' => 'EUR',
+        'version_no' => 1, 'title' => 'Dinner', 'amount' => 10, 'currency' => 'EUR', 'date' => '2026-07-10',
         'paid_by' => $alice->id, 'created_by' => $alice->id,
     ]);
     $v1->shares()->create(['user_id' => $alice->id, 'share_amount' => 10]);
@@ -155,6 +161,7 @@ it('is idempotent when the same client_uuid is replayed, for offline sync retrie
         'title' => 'Dinner',
         'amount' => 20,
         'currency' => 'EUR',
+        'date' => '2026-07-10',
         'client_uuid' => $clientUuid,
         'shares' => [
             ['user_id' => $alice->id, 'amount' => 10],

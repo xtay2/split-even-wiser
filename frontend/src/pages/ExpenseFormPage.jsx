@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   useGetGroupQuery,
@@ -11,6 +11,7 @@ import {
 import { selectCurrentUser } from '../features/auth/authSlice'
 import useOnlineStatus from '../features/offline/useOnlineStatus'
 import { queueOfflineAction } from '../features/offline/offlineQueueSlice'
+import { todayIsoDate } from '../utils/expenseDate'
 import './ExpenseFormPage.css'
 
 // Distributes `totalCents` evenly across `count` shares, handing any remainder cent(s)
@@ -25,6 +26,8 @@ export default function ExpenseFormPage() {
   const { groupId, expenseId } = useParams()
   const navigate = useNavigate()
   const dispatch = useDispatch()
+  const [searchParams] = useSearchParams()
+  const focusField = searchParams.get('focus')
   const currentUser = useSelector(selectCurrentUser)
   const isOnline = useOnlineStatus()
   const isEditing = Boolean(expenseId)
@@ -35,9 +38,14 @@ export default function ExpenseFormPage() {
   const [updateExpense, { isLoading: isUpdating, error: updateError }] = useUpdateExpenseMutation()
   const [deleteExpense] = useDeleteExpenseMutation()
 
+  const titleInputRef = useRef(null)
+  const amountInputRef = useRef(null)
+  const dateInputRef = useRef(null)
+
   const [title, setTitle] = useState('')
   const [amount, setAmount] = useState('')
   const [currency, setCurrency] = useState('EUR')
+  const [date, setDate] = useState(todayIsoDate)
   const [paidBy, setPaidBy] = useState(currentUser?.id)
   const [splitMode, setSplitMode] = useState('equal')
   const [participants, setParticipants] = useState({}) // user_id -> { included, amount }
@@ -56,6 +64,7 @@ export default function ExpenseFormPage() {
       setTitle(version.title)
       setAmount(String(version.amount))
       setCurrency(version.currency)
+      setDate(version.date)
       setPaidBy(version.paid_by)
       setSplitMode('custom')
       setParticipants((prev) => ({
@@ -66,6 +75,13 @@ export default function ExpenseFormPage() {
       }))
     }
   }, [expense])
+
+  useEffect(() => {
+    if (!group || (isEditing && !expense)) return
+    const refs = { date: dateInputRef, amount: amountInputRef, title: titleInputRef }
+    const target = focusField ? refs[focusField] : (!isEditing ? titleInputRef : null)
+    target?.current?.focus()
+  }, [group, expense, isEditing, focusField])
 
   if (!group) {
     return isOnline ? null : (
@@ -110,6 +126,7 @@ export default function ExpenseFormPage() {
       title,
       amount: Number(amount).toFixed(2),
       currency: currency.toUpperCase(),
+      date,
       paid_by: paidBy,
       shares: buildShares(),
     }
@@ -162,11 +179,11 @@ export default function ExpenseFormPage() {
         <label className="expense-form-label">
           Title
           <input
+            ref={titleInputRef}
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             required
             className="expense-form-input"
-            autoFocus
           />
         </label>
 
@@ -174,6 +191,7 @@ export default function ExpenseFormPage() {
           <label className="expense-form-label">
             Amount
             <input
+              ref={amountInputRef}
               type="number"
               step="0.01"
               min="0.01"
@@ -194,6 +212,18 @@ export default function ExpenseFormPage() {
             />
           </label>
         </div>
+
+        <label className="expense-form-label">
+          Date
+          <input
+            ref={dateInputRef}
+            type="date"
+            value={date}
+            onChange={(event) => setDate(event.target.value)}
+            required
+            className="expense-form-input"
+          />
+        </label>
 
         <label className="expense-form-label">
           Paid by

@@ -15,7 +15,29 @@ import { selectCurrentUser } from '../features/auth/authSlice'
 import useOnlineStatus from '../features/offline/useOnlineStatus'
 import { queueOfflineAction, itemRetried, itemDiscarded, selectQueueItems } from '../features/offline/offlineQueueSlice'
 import ActivityFeed from '../components/ActivityFeed'
+import { formatExpenseDate, formatMonthLabel, monthKey } from '../utils/expenseDate'
 import './GroupDetailPage.css'
+
+// Segments the list into contiguous month blocks, newest expense date first.
+function groupExpensesByMonth(expenses) {
+  const sorted = [...expenses].sort((a, b) =>
+    b.current_version.date.localeCompare(a.current_version.date),
+  )
+
+  const groups = []
+  let currentGroup = null
+
+  for (const expense of sorted) {
+    const key = monthKey(expense.current_version.date)
+    if (!currentGroup || currentGroup.key !== key) {
+      currentGroup = { key, label: formatMonthLabel(expense.current_version.date), expenses: [] }
+      groups.push(currentGroup)
+    }
+    currentGroup.expenses.push(expense)
+  }
+
+  return groups
+}
 
 export default function GroupDetailPage() {
   const { groupId } = useParams()
@@ -216,19 +238,55 @@ export default function GroupDetailPage() {
         {expenses.length === 0 ? (
           <p className="friends-empty">No expenses yet.</p>
         ) : (
-          <ul className="expense-list">
-            {expenses.map((expense) => (
-              <li key={expense.id}>
-                <Link to={`/groups/${groupId}/expenses/${expense.id}`} className="expense-row">
-                  <span className="expense-row__title">{expense.current_version.title}</span>
-                  <span className="expense-row__leader" aria-hidden="true" />
-                  <span className="amount">
-                    {expense.current_version.amount} {expense.current_version.currency}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          groupExpensesByMonth(expenses).map((group) => (
+            <div key={group.key} className="expense-month-group">
+              <h3 className="expense-month-heading">{group.label}</h3>
+              <ul className="expense-list">
+                {group.expenses.map((expense) => {
+                  const editPath = `/groups/${groupId}/expenses/${expense.id}`
+                  return (
+                    <li
+                      key={expense.id}
+                      className="expense-row"
+                      onClick={() => navigate(editPath)}
+                    >
+                      <button
+                        type="button"
+                        className="expense-row__date"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          navigate(`${editPath}?focus=date`)
+                        }}
+                      >
+                        {formatExpenseDate(expense.current_version.date)}
+                      </button>
+                      <button
+                        type="button"
+                        className="expense-row__title"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          navigate(`${editPath}?focus=title`)
+                        }}
+                      >
+                        {expense.current_version.title}
+                      </button>
+                      <span className="expense-row__leader" aria-hidden="true" />
+                      <button
+                        type="button"
+                        className="amount expense-row__amount"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          navigate(`${editPath}?focus=amount`)
+                        }}
+                      >
+                        {expense.current_version.amount} {expense.current_version.currency}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          ))
         )}
       </section>
 

@@ -119,7 +119,7 @@ class ExpenseController extends Controller
     }
 
     /**
-     * @return array{title: string, amount: string, currency: string, paid_by: ?int, shares: array<int, array{user_id: int, amount: string}>}
+     * @return array{title: string, amount: string, currency: string, date: string, paid_by: ?int, shares: array<int, array{user_id: int, amount: string}>}
      */
     private function validateVersionPayload(Request $request, Group $group): array
     {
@@ -129,6 +129,7 @@ class ExpenseController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'currency' => ['required', 'string', 'size:3'],
+            'date' => ['required', 'date'],
             'paid_by' => ['nullable', 'integer', 'in:'.$activeMemberIds->implode(',')],
             'shares' => ['required', 'array', 'min:1'],
             'shares.*.user_id' => ['required', 'integer', 'in:'.$activeMemberIds->implode(',')],
@@ -155,6 +156,7 @@ class ExpenseController extends Controller
             'title' => $data['title'],
             'amount' => (string) $data['amount'],
             'currency' => strtoupper($data['currency']),
+            'date' => $data['date'],
             'paid_by' => $data['paid_by'] ?? null,
             'shares' => $data['shares'],
         ];
@@ -167,6 +169,7 @@ class ExpenseController extends Controller
             'title' => $data['title'],
             'amount' => $data['amount'],
             'currency' => $data['currency'],
+            'date' => $data['date'],
             'paid_by' => $data['paid_by'],
             'created_by' => $editorId,
         ]);

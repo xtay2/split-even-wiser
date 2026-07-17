@@ -19,6 +19,7 @@ function makeExpense(Group $group, User $payer, string $title, string $amount, s
         'title' => $title,
         'amount' => $amount,
         'currency' => $currency,
+        'date' => '2026-07-10',
         'paid_by' => $payer->id,
         'created_by' => $payer->id,
     ]);

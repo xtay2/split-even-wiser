@@ -16,6 +16,7 @@ class ExpenseVersion extends Model
         'title',
         'amount',
         'currency',
+        'date',
         'paid_by',
         'created_by',
     ];
@@ -24,6 +25,7 @@ class ExpenseVersion extends Model
     {
         return [
             'amount' => 'decimal:2',
+            'date' => 'date:Y-m-d',
             'created_at' => 'datetime',
         ];
     }

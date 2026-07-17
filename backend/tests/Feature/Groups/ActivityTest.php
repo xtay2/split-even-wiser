@@ -11,7 +11,7 @@ it('lists expense versions and settlements as a combined, newest-first activity 
 
     $expense = Expense::create(['group_id' => $group->id, 'created_by' => $alice->id]);
     $v1 = $expense->versions()->create([
-        'version_no' => 1, 'title' => 'Dinner', 'amount' => '20.00', 'currency' => 'EUR',
+        'version_no' => 1, 'title' => 'Dinner', 'amount' => '20.00', 'currency' => 'EUR', 'date' => '2026-07-10',
         'paid_by' => $alice->id, 'created_by' => $alice->id,
     ]);
     $v1->shares()->createMany([
@@ -39,7 +39,7 @@ it('records a deletion in the activity feed without losing prior edit history', 
 
     $expense = Expense::create(['group_id' => $group->id, 'created_by' => $alice->id]);
     $v1 = $expense->versions()->create([
-        'version_no' => 1, 'title' => 'Dinner', 'amount' => '10.00', 'currency' => 'EUR',
+        'version_no' => 1, 'title' => 'Dinner', 'amount' => '10.00', 'currency' => 'EUR', 'date' => '2026-07-10',
         'paid_by' => $alice->id, 'created_by' => $alice->id,
     ]);
     $v1->shares()->create(['user_id' => $alice->id, 'share_amount' => '10.00']);
