@@ -22,6 +22,18 @@ export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor
               {group.items.map((item) => {
                 if (item.kind === 'settlement') {
                   const editPath = `/groups/${groupId}/settlements/${item.settlement.id}`
+                  const iPaid = currentUser.id === item.settlement.from_user.id
+                  const iReceived = currentUser.id === item.settlement.to_user.id
+                  const settlementShareClass = iPaid
+                    ? ' expense-row__share--owed'
+                    : iReceived
+                      ? ' expense-row__share--credit'
+                      : ''
+                  const settlementShareLabel = iPaid
+                    ? `You paid ${item.amount} ${item.currency}`
+                    : iReceived
+                      ? `You received ${item.amount} ${item.currency}`
+                      : 'Not involved'
                   return (
                     <li
                       key={item.key}
@@ -35,10 +47,11 @@ export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor
                           {nameFor(item.settlement.from_user.id)} to {nameFor(item.settlement.to_user.id)}
                         </span>
                         <span className="expense-row__leader" aria-hidden="true" />
-                        <span className="amount expense-row__amount amount--credit">
+                        <span className="amount expense-row__amount">
                           {item.amount} {item.currency}
                         </span>
                       </div>
+                      <div className={`expense-row__share${settlementShareClass}`}>{settlementShareLabel}</div>
                     </li>
                   )
                 }
