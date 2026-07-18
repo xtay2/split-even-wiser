@@ -22,6 +22,28 @@ function splitEvenly(totalCents, count) {
   return Array.from({ length: count }, (_, index) => base + (index < remainder ? 1 : 0))
 }
 
+const PARTICIPANTS_STORAGE_PREFIX = 'split-even-wiser.expense-participants.'
+
+function loadPersistedParticipants(groupId) {
+  try {
+    const raw = localStorage.getItem(PARTICIPANTS_STORAGE_PREFIX + groupId)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+function persistParticipants(groupId, participants) {
+  try {
+    const included = Object.fromEntries(
+      Object.entries(participants).map(([id, value]) => [id, value.included]),
+    )
+    localStorage.setItem(PARTICIPANTS_STORAGE_PREFIX + groupId, JSON.stringify(included))
+  } catch {
+    // localStorage may be unavailable (e.g. private browsing) — selection just won't persist
+  }
+}
+
 export default function ExpenseFormPage() {
   const { groupId, expenseId } = useParams()
   const navigate = useNavigate()
@@ -52,11 +74,14 @@ export default function ExpenseFormPage() {
 
   useEffect(() => {
     if (group && Object.keys(participants).length === 0) {
+      const saved = isEditing ? null : loadPersistedParticipants(groupId)
       setParticipants(
-        Object.fromEntries(group.members.map((member) => [member.id, { included: true, amount: '' }])),
+        Object.fromEntries(
+          group.members.map((member) => [member.id, { included: saved?.[member.id] ?? true, amount: '' }]),
+        ),
       )
     }
-  }, [group, participants])
+  }, [group, participants, isEditing, groupId])
 
   useEffect(() => {
     if (expense) {
@@ -94,10 +119,16 @@ export default function ExpenseFormPage() {
   const included = group.members.filter((member) => participants[member.id]?.included)
 
   function toggleParticipant(userId) {
-    setParticipants((prev) => ({
-      ...prev,
-      [userId]: { ...prev[userId], included: !prev[userId].included },
-    }))
+    setParticipants((prev) => {
+      const updated = {
+        ...prev,
+        [userId]: { ...prev[userId], included: !prev[userId].included },
+      }
+      if (!isEditing) {
+        persistParticipants(groupId, updated)
+      }
+      return updated
+    })
   }
 
   function setCustomAmount(userId, value) {
