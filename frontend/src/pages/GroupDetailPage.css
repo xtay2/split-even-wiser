@@ -268,13 +268,16 @@
   border-radius: 999px;
   background: var(--ledger-green);
   color: #fff;
-  fill: #fff;
   width: fit-content;
   font-weight: 700;
   font-size: 0.85rem;
   text-decoration: none;
   box-shadow: 0 6px 16px rgba(31, 42, 36, 0.25);
   cursor: pointer;
+}
+
+.group-fab svg {
+  fill: #fff;
 }
 
 .group-fab:hover:not(:disabled) {
