@@ -116,7 +116,11 @@ export default function ExpenseFormPage() {
     )
   }
 
-  const included = group.members.filter((member) => participants[member.id]?.included)
+  const included = group.members.filter((member) =>
+    splitMode === 'custom'
+      ? Number(participants[member.id]?.amount || 0) > 0
+      : participants[member.id]?.included,
+  )
 
   function toggleParticipant(userId) {
     setParticipants((prev) => {
@@ -292,23 +296,29 @@ export default function ExpenseFormPage() {
 
           {group.members.map((member) => (
             <div key={member.id} className="expense-form-participant">
-              <label className="expense-form-participant__check">
-                <input
-                  type="checkbox"
-                  checked={participants[member.id]?.included ?? false}
-                  onChange={() => toggleParticipant(member.id)}
-                />
-                {member.id === currentUser.id ? 'You' : `@${member.username}`}
-              </label>
-              {splitMode === 'custom' && participants[member.id]?.included && (
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={participants[member.id]?.amount ?? ''}
-                  onChange={(event) => setCustomAmount(member.id, event.target.value)}
-                  className="expense-form-input expense-form-input--share amount"
-                />
+              {splitMode === 'equal' ? (
+                <label className="expense-form-participant__check">
+                  <input
+                    type="checkbox"
+                    checked={participants[member.id]?.included ?? false}
+                    onChange={() => toggleParticipant(member.id)}
+                  />
+                  {member.id === currentUser.id ? 'You' : `@${member.username}`}
+                </label>
+              ) : (
+                <>
+                  <span className="expense-form-participant__name">
+                    {member.id === currentUser.id ? 'You' : `@${member.username}`}
+                  </span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={participants[member.id]?.amount ?? ''}
+                    onChange={(event) => setCustomAmount(member.id, event.target.value)}
+                    className="expense-form-input expense-form-input--share amount"
+                  />
+                </>
               )}
             </div>
           ))}

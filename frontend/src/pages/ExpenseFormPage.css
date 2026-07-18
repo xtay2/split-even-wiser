@@ -103,6 +103,10 @@
   font-size: 0.9rem;
 }
 
+.expense-form-participant__name {
+  font-size: 0.9rem;
+}
+
 .expense-form-split-total {
   font-family: var(--font-mono);
   font-size: 0.85rem;
