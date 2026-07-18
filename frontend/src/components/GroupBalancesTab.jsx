@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useGetBalancesQuery, useCreateSettlementMutation } from '../api/groupsApi'
 import useOnlineStatus from '../features/offline/useOnlineStatus'
 import { queueOfflineAction, selectQueueItems } from '../features/offline/offlineQueueSlice'
+import ConfirmDialog from './ConfirmDialog'
 
 export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor }) {
   const dispatch = useDispatch()
@@ -10,6 +12,11 @@ export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor
 
   const { data: balances = [] } = useGetBalancesQuery(groupId)
   const [createSettlement] = useCreateSettlementMutation()
+
+  const [showSettleAllConfirm, setShowSettleAllConfirm] = useState(false)
+  const [isSettlingAll, setIsSettlingAll] = useState(false)
+  const [confirmingTransaction, setConfirmingTransaction] = useState(null)
+  const [isSettlingOne, setIsSettlingOne] = useState(false)
 
   const myBalances = balances.filter(
     (transaction) => transaction.from_user_id === currentUser.id || transaction.to_user_id === currentUser.id,
@@ -27,7 +34,12 @@ export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor
       .map((item) => item.payload.to_user_id),
   )
 
-  async function handleSettle(transaction) {
+  const settleableDebts = myBalances.filter(
+    (transaction) =>
+      transaction.from_user_id === currentUser.id && !pendingSettlementTargets.has(transaction.to_user_id),
+  )
+
+  async function settleTransaction(transaction) {
     const payload = {
       to_user_id: transaction.to_user_id,
       amount: transaction.amount,
@@ -62,48 +74,105 @@ export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor
     }
   }
 
+  async function handleSettle() {
+    setIsSettlingOne(true)
+    try {
+      await settleTransaction(confirmingTransaction)
+    } finally {
+      setIsSettlingOne(false)
+      setConfirmingTransaction(null)
+    }
+  }
+
+  async function handleSettleAll() {
+    setIsSettlingAll(true)
+    try {
+      for (const transaction of settleableDebts) {
+        await settleTransaction(transaction)
+      }
+    } finally {
+      setIsSettlingAll(false)
+      setShowSettleAllConfirm(false)
+    }
+  }
+
   return (
     <section hidden={hidden}>
+      <ConfirmDialog
+        open={showSettleAllConfirm}
+        title="Mark all debts as settled?"
+        message={`This records ${settleableDebts.length} payment${settleableDebts.length === 1 ? '' : 's'} to clear everything you owe in this group.`}
+        confirmLabel="Mark all settled"
+        isConfirming={isSettlingAll}
+        onConfirm={handleSettleAll}
+        onCancel={() => setShowSettleAllConfirm(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmingTransaction !== null}
+        title="Mark debt as settled?"
+        message={
+          confirmingTransaction
+            ? `This records a payment of ${confirmingTransaction.amount} ${confirmingTransaction.currency} to ${nameFor(confirmingTransaction.to_user_id)}.`
+            : ''
+        }
+        confirmLabel="Mark settled"
+        isConfirming={isSettlingOne}
+        onConfirm={handleSettle}
+        onCancel={() => setConfirmingTransaction(null)}
+      />
+
       {myBalances.length === 0 && otherBalances.length === 0 ? (
         <p className="friends-empty">Everyone's settled up.</p>
       ) : (
-        <ul className="balance-list">
-          {myBalances.map((transaction, index) => {
-            const youOwe = transaction.from_user_id === currentUser.id
-            return (
-              <li key={index} className="balance-row">
-                <span>
-                  {youOwe ? (
-                    <>You owe <strong>{nameFor(transaction.to_user_id)}</strong></>
-                  ) : (
-                    <><strong>{nameFor(transaction.from_user_id)}</strong> owes you</>
+        <>
+          {settleableDebts.length > 1 && (
+            <button
+              type="button"
+              className="balance-settle-all-btn"
+              onClick={() => setShowSettleAllConfirm(true)}
+            >
+              Mark all as settled
+            </button>
+          )}
+          <ul className="balance-list">
+            {myBalances.map((transaction, index) => {
+              const youOwe = transaction.from_user_id === currentUser.id
+              return (
+                <li key={index} className="balance-row">
+                  <span>
+                    {youOwe ? (
+                      <>You owe <strong>{nameFor(transaction.to_user_id)}</strong></>
+                    ) : (
+                      <><strong>{nameFor(transaction.from_user_id)}</strong> owes you</>
+                    )}
+                  </span>
+                  <span className={`amount ${youOwe ? 'amount--owed' : 'amount--credit'}`}>
+                    {transaction.amount} {transaction.currency}
+                  </span>
+                  {youOwe && (
+                    <button
+                      type="button"
+                      className="balance-settle-btn"
+                      onClick={() => setConfirmingTransaction(transaction)}
+                      disabled={pendingSettlementTargets.has(transaction.to_user_id)}
+                    >
+                      {pendingSettlementTargets.has(transaction.to_user_id) ? 'Queued' : 'Mark settled'}
+                    </button>
                   )}
+                </li>
+              )
+            })}
+            {otherBalances.map((transaction, index) => (
+              <li key={`other-${index}`} className="balance-row balance-row--muted">
+                <span>
+                  {nameFor(transaction.from_user_id)} owes {nameFor(transaction.to_user_id)}
                 </span>
-                <span className={`amount ${youOwe ? 'amount--owed' : 'amount--credit'}`}>
-                  {transaction.amount} {transaction.currency}
-                </span>
-                {youOwe && (
-                  <button
-                    type="button"
-                    className="balance-settle-btn"
-                    onClick={() => handleSettle(transaction)}
-                    disabled={pendingSettlementTargets.has(transaction.to_user_id)}
-                  >
-                    {pendingSettlementTargets.has(transaction.to_user_id) ? 'Queued' : 'Mark settled'}
-                  </button>
-                )}
+                <span className="amount">{transaction.amount} {transaction.currency}</span>
               </li>
-            )
-          })}
-          {otherBalances.map((transaction, index) => (
-            <li key={`other-${index}`} className="balance-row balance-row--muted">
-              <span>
-                {nameFor(transaction.from_user_id)} owes {nameFor(transaction.to_user_id)}
-              </span>
-              <span className="amount">{transaction.amount} {transaction.currency}</span>
-            </li>
-          ))}
-        </ul>
+            ))}
+          </ul>
+        </>
       )}
     </section>
   )

@@ -123,6 +123,19 @@
   cursor: pointer;
 }
 
+.balance-settle-all-btn {
+  display: block;
+  margin: 0 0 0.75rem auto;
+  border: 1px solid var(--ledger-green);
+  background: var(--ledger-green);
+  color: var(--paper-raised);
+  border-radius: 6px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .expense-month-group + .expense-month-group {
   margin-top: 1rem;
 }
