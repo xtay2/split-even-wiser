@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { useGetGroupsQuery, useCreateGroupMutation } from '../api/groupsApi'
+import { GroupIcon } from '../components/icons/GroupIcon.tsx'
 import './GroupsPage.css'
 
 export default function GroupsPage() {
@@ -27,7 +28,14 @@ export default function GroupsPage() {
       <div className="groups-header">
         <h2 className="friends-section-title">Your groups</h2>
         <button type="button" className="groups-new-btn" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? 'Cancel' : '+ New group'}
+          {showForm ? (
+            'Cancel'
+          ) : (
+            <>
+              <GroupIcon />
+              New group
+            </>
+          )}
         </button>
       </div>
 

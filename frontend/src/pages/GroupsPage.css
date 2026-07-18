@@ -11,13 +11,25 @@
 }
 
 .groups-new-btn {
-  background: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.7rem 1.1rem;
   border: none;
-  color: var(--ledger-green);
-  font-weight: 600;
+  border-radius: 999px;
+  background: var(--ledger-green);
+  color: #fff;
+  fill: #fff;
+  width: fit-content;
+  font-weight: 700;
   font-size: 0.85rem;
+  text-decoration: none;
+  box-shadow: 0 6px 16px rgba(31, 42, 36, 0.25);
   cursor: pointer;
-  padding: 0;
+}
+
+.groups-new-btn:hover {
+  filter: brightness(1.08);
 }
 
 .groups-new-form {
