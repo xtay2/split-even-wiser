@@ -11,8 +11,7 @@ export default function ImprintPage() {
         <section className="imprint-section">
           <h2>Operator</h2>
           <p>
-            Dennis Woithe<br />
-            (Individual)
+            <a href="mailto:mail@xtay2.com" target="_blank">Dennis Woithe</a> (Individual)
           </p>
         </section>
 
@@ -23,11 +22,11 @@ export default function ImprintPage() {
 
         <section className="imprint-section">
           <h2>Address</h2>
-          <p>
+          <address>
             Stadtrade 9<br />
             24113 Kiel<br />
             Germany
-          </p>
+          </address>
         </section>
 
         <Link to="/" className="imprint-back-link">← Back</Link>
