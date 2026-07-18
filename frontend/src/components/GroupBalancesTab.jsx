@@ -4,6 +4,7 @@ import { useGetBalancesQuery, useCreateSettlementMutation } from '../api/groupsA
 import useOnlineStatus from '../features/offline/useOnlineStatus'
 import { queueOfflineAction, selectQueueItems } from '../features/offline/offlineQueueSlice'
 import ConfirmDialog from './ConfirmDialog'
+import { todayIsoDate } from '../utils/expenseDate'
 
 export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor }) {
   const dispatch = useDispatch()
@@ -44,6 +45,7 @@ export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor
       to_user_id: transaction.to_user_id,
       amount: transaction.amount,
       currency: transaction.currency,
+      date: todayIsoDate(),
     }
 
     if (!isOnline) {

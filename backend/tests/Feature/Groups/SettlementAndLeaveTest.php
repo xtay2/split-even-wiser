@@ -14,6 +14,7 @@ it('records a settlement made by the authenticated user', function () {
         'to_user_id' => $bob->id,
         'amount' => 10,
         'currency' => 'EUR',
+        'date' => '2026-07-16',
     ]);
 
     $response->assertCreated()
@@ -27,7 +28,7 @@ it('is idempotent when the same client_uuid is replayed, for offline sync retrie
     $group = groupWithMembers($alice, $bob);
     $clientUuid = (string) Illuminate\Support\Str::uuid();
 
-    $payload = ['to_user_id' => $bob->id, 'amount' => 10, 'currency' => 'EUR', 'client_uuid' => $clientUuid];
+    $payload = ['to_user_id' => $bob->id, 'amount' => 10, 'currency' => 'EUR', 'date' => '2026-07-16', 'client_uuid' => $clientUuid];
 
     $first = $this->actingAs($alice)->postJson("/api/groups/{$group->id}/settlements", $payload);
     $first->assertCreated();
@@ -55,18 +56,21 @@ it('records a partial settlement with a date, as its own ledger entry', function
         ->assertJsonPath('amount', '4.50');
 });
 
-it('defaults date when a settlement is recorded without them', function () {
+it('rejects a settlement recorded without a date', function () {
     $alice = User::factory()->create();
     $bob = User::factory()->create();
     $group = groupWithMembers($alice, $bob);
 
+    // The date must be supplied by the client (in the user's local time zone) rather than
+    // defaulted server-side, since the server's clock runs in UTC and would otherwise shift
+    // settlements made shortly after local midnight onto the wrong day.
     $response = $this->actingAs($alice)->postJson("/api/groups/{$group->id}/settlements", [
         'to_user_id' => $bob->id,
         'amount' => 10,
         'currency' => 'EUR',
     ]);
 
-    expect($response->json('date'))->not->toBeNull();
+    $response->assertUnprocessable()->assertJsonValidationErrors('date');
 });
 
 it('rejects settling a debt with yourself', function () {

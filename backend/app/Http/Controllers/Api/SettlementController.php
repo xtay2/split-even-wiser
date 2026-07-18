@@ -51,7 +51,7 @@ class SettlementController extends Controller
             'to_user_id' => $data['to_user_id'],
             'amount' => $data['amount'],
             'currency' => $data['currency'],
-            'date' => $data['date'] ?? now()->toDateString(),
+            'date' => $data['date'],
             'created_by' => $request->user()->id,
             'client_uuid' => $data['client_uuid'] ?? null,
         ]);
@@ -72,7 +72,7 @@ class SettlementController extends Controller
             'to_user_id' => $data['to_user_id'],
             'amount' => $data['amount'],
             'currency' => $data['currency'],
-            'date' => $data['date'] ?? $settlement->date,
+            'date' => $data['date'],
         ]);
 
         return response()->json($settlement->fresh(['fromUser', 'toUser']));
@@ -89,7 +89,7 @@ class SettlementController extends Controller
     }
 
     /**
-     * @return array{to_user_id: int, amount: string, currency: string, date: ?string, client_uuid?: string}
+     * @return array{to_user_id: int, amount: string, currency: string, date: string, client_uuid?: string}
      */
     private function validatePayload(Request $request, Group $group, int $fromUserId): array
     {
@@ -99,7 +99,7 @@ class SettlementController extends Controller
             'to_user_id' => ['required', 'integer', 'in:'.$activeMemberIds->implode(',')],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'currency' => ['required', 'string', 'size:3'],
-            'date' => ['nullable', 'date'],
+            'date' => ['required', 'date'],
             'client_uuid' => ['nullable', 'uuid'],
         ]);
 
