@@ -27,7 +27,10 @@ export default function GroupsPage() {
     <div className="groups-screen">
       <div className="groups-header">
         <h2 className="friends-section-title">Your groups</h2>
-        <button type="button" className="groups-new-btn" onClick={() => setShowForm((v) => !v)}>
+      </div>
+
+      <div className="group-fab-column">
+        <button type="button" className="group-fab" onClick={() => setShowForm((v) => !v)}>
           {showForm ? (
             'Cancel'
           ) : (
