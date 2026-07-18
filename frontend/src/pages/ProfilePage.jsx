@@ -14,6 +14,7 @@ import EditFieldDialog from '../components/EditFieldDialog'
 import './ProfilePage.css'
 
 const PUSH_STATUS_LABEL = {
+  checking: 'Checking…',
   idle: 'Enable push notifications',
   subscribing: 'Enabling…',
   subscribed: 'Notifications enabled',
@@ -163,7 +164,9 @@ export default function ProfilePage() {
           type="button"
           className="profile-push-btn"
           onClick={enablePush}
-          disabled={pushStatus === 'subscribing' || pushStatus === 'subscribed'}
+          disabled={
+            pushStatus === 'checking' || pushStatus === 'subscribing' || pushStatus === 'subscribed'
+          }
         >
           {PUSH_STATUS_LABEL[pushStatus]}
         </button>

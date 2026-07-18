@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLazyGetVapidPublicKeyQuery, useSubscribeToPushMutation } from '../../api/pushApi'
 import { urlBase64ToUint8Array } from './vapid'
 
@@ -7,9 +7,36 @@ export function isPushSupported() {
 }
 
 export function usePushSubscription() {
-  const [status, setStatus] = useState('idle') // idle | subscribing | subscribed | denied | error
+  const [status, setStatus] = useState('checking') // checking | idle | subscribing | subscribed | denied | error
   const [fetchVapidKey] = useLazyGetVapidPublicKeyQuery()
   const [subscribeToPush] = useSubscribeToPushMutation()
+
+  useEffect(() => {
+    if (!isPushSupported()) {
+      setStatus('error')
+      return
+    }
+
+    if (Notification.permission === 'denied') {
+      setStatus('denied')
+      return
+    }
+
+    let cancelled = false
+
+    navigator.serviceWorker.ready
+      .then((registration) => registration.pushManager.getSubscription())
+      .then((subscription) => {
+        if (!cancelled) setStatus(subscription ? 'subscribed' : 'idle')
+      })
+      .catch(() => {
+        if (!cancelled) setStatus('idle')
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   async function enable() {
     if (!isPushSupported()) {
