@@ -30,9 +30,9 @@ export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor
                       ? ' expense-row__share--credit'
                       : ''
                   const settlementShareLabel = iPaid
-                    ? `You paid ${item.amount} ${item.currency}`
+                    ? `You paid ${item.amount} ${item.currency} to ${nameFor(item.settlement.to_user.id)}`
                     : iReceived
-                      ? `You received ${item.amount} ${item.currency}`
+                      ? `You received ${item.amount} ${item.currency} from ${nameFor(item.settlement.from_user.id)}`
                       : 'Not involved'
                   return (
                     <li
@@ -44,7 +44,6 @@ export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor
                         <span className="expense-row__date">{formatExpenseDate(item.date)}</span>
                         <span className="expense-row__title">
                           <span className="settlement-badge">Settlement</span>
-                          {nameFor(item.settlement.from_user.id)} to {nameFor(item.settlement.to_user.id)}
                         </span>
                         <span className="expense-row__leader" aria-hidden="true" />
                         <span className="amount expense-row__amount">
@@ -67,7 +66,7 @@ export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor
                     : myNet > 0
                       ? `You get back ${myNet.toFixed(2)} ${expense.current_version.currency}`
                       : myNet < 0
-                        ? `You owe ${Math.abs(myNet).toFixed(2)} ${expense.current_version.currency}`
+                        ? `You owe ${Math.abs(myNet).toFixed(2)} ${expense.current_version.currency} to ${nameFor(expense.current_version.payer.id)}`
                         : 'You paid your share'
                 return (
                   <li key={item.key} className="expense-row" onClick={() => navigate(editPath)}>
