@@ -12,6 +12,7 @@ import GroupDetailPage from '../pages/GroupDetailPage'
 import ExpenseFormPage from '../pages/ExpenseFormPage'
 import SettlementFormPage from '../pages/SettlementFormPage.jsx'
 import NotFoundPage from '../pages/NotFoundPage'
+import ImprintPage from '../pages/ImprintPage'
 
 export const router = createBrowserRouter([
   {
@@ -21,6 +22,10 @@ export const router = createBrowserRouter([
   {
     path: '/login/verify',
     element: <LoginVerifyPage />,
+  },
+  {
+    path: '/imprint',
+    element: <ImprintPage />,
   },
   {
     element: <RequireAuth />,

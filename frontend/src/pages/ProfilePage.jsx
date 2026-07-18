@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import {
   useGetMeQuery,
   useUpdateMeMutation,
@@ -175,6 +175,8 @@ export default function ProfilePage() {
       <button type="button" className="profile-logout-btn" onClick={handleLogout}>
         Log out
       </button>
+
+      <Link to="/imprint" className="profile-imprint-link">Imprint</Link>
 
       <EditFieldDialog
         open={usernameDialogOpen}

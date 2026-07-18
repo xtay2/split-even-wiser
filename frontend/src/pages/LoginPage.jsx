@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { useRequestLoginTokenMutation } from '../api/authApi'
 import './LoginPage.css'
 
@@ -53,6 +54,8 @@ export default function LoginPage() {
             </button>
           </form>
         )}
+
+        <Link to="/imprint" className="login-imprint-link">Imprint</Link>
       </div>
     </div>
   )

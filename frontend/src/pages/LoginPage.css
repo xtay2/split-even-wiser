@@ -82,6 +82,15 @@
   line-height: 1.5;
 }
 
+.login-imprint-link {
+  display: block;
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  text-decoration: underline;
+}
+
 .login-link-btn {
   margin-top: 0.85rem;
   background: none;

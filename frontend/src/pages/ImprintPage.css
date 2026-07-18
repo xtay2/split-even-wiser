@@ -1,0 +1,58 @@
+.imprint-screen {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--paper);
+}
+
+.imprint-card {
+  width: 100%;
+  max-width: 420px;
+}
+
+.imprint-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ledger-green);
+  margin: 0 0 0.6rem;
+}
+
+.imprint-title {
+  font-size: 1.85rem;
+  line-height: 1.15;
+  margin-bottom: 1.75rem;
+}
+
+.imprint-section {
+  margin-bottom: 1.25rem;
+}
+
+.imprint-section h2 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  margin-bottom: 0.35rem;
+}
+
+.imprint-section p {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.imprint-section a {
+  color: var(--ledger-green);
+}
+
+.imprint-back-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: var(--ledger-green);
+  font-weight: 600;
+  text-decoration: underline;
+}

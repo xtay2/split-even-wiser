@@ -121,3 +121,10 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+.profile-imprint-link {
+  align-self: center;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  text-decoration: underline;
+}
