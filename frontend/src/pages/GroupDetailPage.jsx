@@ -119,6 +119,7 @@ export default function GroupDetailPage() {
       <GroupPaymentsTab
         hidden={effectiveTab !== 'payments'}
         groupId={groupId}
+        currentUser={currentUser}
         nameFor={nameFor}
         hasOtherMembers={hasOtherMembers}
       />

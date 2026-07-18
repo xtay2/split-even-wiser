@@ -1,11 +1,11 @@
 import { Link, useNavigate } from 'react-router'
 import { useGetExpensesQuery, useGetSettlementsQuery } from '../api/groupsApi'
 import { formatExpenseDate } from '../utils/expenseDate'
-import { buildLedgerItems, groupItemsByMonth } from '../utils/groupLedger'
+import { buildLedgerItems, groupItemsByMonth, getMyExpenseNet } from '../utils/groupLedger'
 import { PaymentsIcon } from './icons/PaymentsIcon.tsx'
 import { ReceiptLongIcon } from './icons/ReceiptLongIcon.tsx'
 
-export default function GroupPaymentsTab({ hidden, groupId, nameFor, hasOtherMembers }) {
+export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor, hasOtherMembers }) {
   const navigate = useNavigate()
   const { data: expenses = [] } = useGetExpensesQuery(groupId)
   const { data: settlements = [] } = useGetSettlementsQuery(groupId)
@@ -28,54 +28,70 @@ export default function GroupPaymentsTab({ hidden, groupId, nameFor, hasOtherMem
                       className="expense-row expense-row--settlement"
                       onClick={() => navigate(editPath)}
                     >
-                      <span className="expense-row__date">{formatExpenseDate(item.date)}</span>
-                      <span className="expense-row__title">
-                        <span className="settlement-badge">Settlement</span>
-                        {nameFor(item.settlement.from_user.id)} to {nameFor(item.settlement.to_user.id)}
-                      </span>
-                      <span className="expense-row__leader" aria-hidden="true" />
-                      <span className="amount expense-row__amount amount--credit">
-                        {item.amount} {item.currency}
-                      </span>
+                      <div className="expense-row__main">
+                        <span className="expense-row__date">{formatExpenseDate(item.date)}</span>
+                        <span className="expense-row__title">
+                          <span className="settlement-badge">Settlement</span>
+                          {nameFor(item.settlement.from_user.id)} to {nameFor(item.settlement.to_user.id)}
+                        </span>
+                        <span className="expense-row__leader" aria-hidden="true" />
+                        <span className="amount expense-row__amount amount--credit">
+                          {item.amount} {item.currency}
+                        </span>
+                      </div>
                     </li>
                   )
                 }
 
                 const expense = item.expense
                 const editPath = `/groups/${groupId}/expenses/${expense.id}`
+                const myNet = getMyExpenseNet(expense, currentUser.id)
+                const shareClass =
+                  myNet === null ? '' : myNet > 0 ? ' expense-row__share--credit' : myNet < 0 ? ' expense-row__share--owed' : ''
+                const shareLabel =
+                  myNet === null
+                    ? 'Not involved'
+                    : myNet > 0
+                      ? `You get back ${myNet.toFixed(2)} ${expense.current_version.currency}`
+                      : myNet < 0
+                        ? `You owe ${Math.abs(myNet).toFixed(2)} ${expense.current_version.currency}`
+                        : 'You paid your share'
                 return (
                   <li key={item.key} className="expense-row" onClick={() => navigate(editPath)}>
-                    <button
-                      type="button"
-                      className="expense-row__date"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        navigate(`${editPath}?focus=date`)
-                      }}
-                    >
-                      {formatExpenseDate(expense.current_version.date)}
-                    </button>
-                    <button
-                      type="button"
-                      className="expense-row__title"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        navigate(`${editPath}?focus=title`)
-                      }}
-                    >
-                      {expense.current_version.title}
-                    </button>
-                    <span className="expense-row__leader" aria-hidden="true" />
-                    <button
-                      type="button"
-                      className="amount expense-row__amount"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        navigate(`${editPath}?focus=amount`)
-                      }}
-                    >
-                      {expense.current_version.amount} {expense.current_version.currency}
-                    </button>
+                    <div className="expense-row__main">
+                      <button
+                        type="button"
+                        className="expense-row__date"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          navigate(`${editPath}?focus=date`)
+                        }}
+                      >
+                        {formatExpenseDate(expense.current_version.date)}
+                      </button>
+                      <button
+                        type="button"
+                        className="expense-row__title"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          navigate(`${editPath}?focus=title`)
+                        }}
+                      >
+                        {expense.current_version.title}
+                      </button>
+                      <span className="expense-row__leader" aria-hidden="true" />
+                      <button
+                        type="button"
+                        className="amount expense-row__amount"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          navigate(`${editPath}?focus=amount`)
+                        }}
+                      >
+                        {expense.current_version.amount} {expense.current_version.currency}
+                      </button>
+                    </div>
+                    <div className={`expense-row__share${shareClass}`}>{shareLabel}</div>
                   </li>
                 )
               })}
