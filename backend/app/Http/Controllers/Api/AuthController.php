@@ -57,6 +57,10 @@ class AuthController extends Controller
                 'email' => $data['email'],
                 'username' => $data['username'],
             ]);
+        } elseif ($user->is_placeholder) {
+            // Logging in with the placeholder's own email is itself the claim — no separate
+            // merge needed, this is the same row becoming a real, login-capable account.
+            $user->update(['is_placeholder' => false, 'claimed_at' => now()]);
         }
 
         $loginToken->update(['consumed_at' => now()]);

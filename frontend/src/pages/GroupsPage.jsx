@@ -69,7 +69,7 @@ export default function GroupsPage() {
       {isLoading ? (
         <p className="friends-empty">Loading…</p>
       ) : groups.length === 0 ? (
-        <p className="friends-empty">No groups yet — create one to start splitting costs.</p>
+        <p className="friends-empty">No groups yet - create one to start splitting costs.</p>
       ) : (
         <ul className="groups-list">
           {groups.map((group) => (

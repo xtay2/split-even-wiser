@@ -1,7 +1,7 @@
-# Backend (Laravel) — see also backend/.gitignore for Laravel-specific entries
+# Backend (Laravel) - see also backend/.gitignore for Laravel-specific entries
 /backend/database/database.sqlite
 
-# Frontend (Vite/React) — see also frontend/.gitignore
+# Frontend (Vite/React) - see also frontend/.gitignore
 /frontend/.env
 
 # Docker-mailserver runtime data

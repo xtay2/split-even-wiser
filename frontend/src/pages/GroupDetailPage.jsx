@@ -11,6 +11,7 @@ import GroupPaymentsTab from '../components/GroupPaymentsTab'
 import GroupMembersTab from '../components/GroupMembersTab'
 import GroupActivityTab from '../components/GroupActivityTab'
 import { LogoutIcon } from '../components/icons/LogoutIcon.tsx'
+import { personName } from '../utils/personName'
 import './GroupDetailPage.css'
 
 const TABS = [
@@ -39,9 +40,9 @@ export default function GroupDetailPage() {
   }
 
   const membersById = Object.fromEntries(group.members.map((member) => [member.id, member]))
-  const nameFor = (userId) => (userId === currentUser.id ? 'You' : `@${membersById[userId]?.username ?? '?'}`)
+  const nameFor = (userId) => personName(membersById[userId], currentUser.id)
 
-  // Nobody to split with yet — land on Members instead of an empty Payments tab, until
+  // Nobody to split with yet - land on Members instead of an empty Payments tab, until
   // the person picks a tab themselves.
   const hasOtherMembers = group.members.length > 1
   const effectiveTab = activeTab ?? (hasOtherMembers ? 'payments' : 'members')
@@ -115,15 +116,21 @@ export default function GroupDetailPage() {
         groupId={groupId}
         currentUser={currentUser}
         nameFor={nameFor}
+        membersById={membersById}
       />
       <GroupPaymentsTab
         hidden={effectiveTab !== 'payments'}
         groupId={groupId}
         currentUser={currentUser}
         nameFor={nameFor}
-        hasOtherMembers={hasOtherMembers}
       />
-      <GroupMembersTab hidden={effectiveTab !== 'members'} groupId={groupId} group={group} isOnline={isOnline} />
+      <GroupMembersTab
+        hidden={effectiveTab !== 'members'}
+        groupId={groupId}
+        group={group}
+        currentUser={currentUser}
+        isOnline={isOnline}
+      />
       <GroupActivityTab hidden={effectiveTab !== 'activity'} groupId={groupId} currentUserId={currentUser.id} />
     </div>
   )

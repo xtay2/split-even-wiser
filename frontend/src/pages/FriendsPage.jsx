@@ -11,6 +11,7 @@ import {
 import PersonRow from '../components/PersonRow'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { GroupAddIcon } from '../components/icons/GroupAddIcon'
+import { personName } from '../utils/personName'
 import './FriendsPage.css'
 
 export default function FriendsPage() {
@@ -53,7 +54,7 @@ export default function FriendsPage() {
         title="Remove friend?"
         message={
           confirmingFriend
-            ? `You'll no longer be friends with @${confirmingFriend.user.username}.`
+            ? `You'll no longer be friends with ${personName(confirmingFriend.user)}.`
             : ''
         }
         confirmLabel="Remove"
@@ -129,7 +130,7 @@ export default function FriendsPage() {
         {friendsLoading ? (
           <p className="friends-empty">Loading…</p>
         ) : friends.length === 0 ? (
-          <p className="friends-empty">No friends yet — add one above to get started.</p>
+          <p className="friends-empty">No friends yet - add one above to get started.</p>
         ) : (
           <ul className="friends-list">
             {friends.map((friend) => (
@@ -137,7 +138,7 @@ export default function FriendsPage() {
                 <Link
                   to={`/friends/${friend.friendship_id}/add-to-group`}
                   className="friends-addgroup-btn"
-                  aria-label={`Add @${friend.user.username} to a group`}
+                  aria-label={`Add ${personName(friend.user)} to a group`}
                   title="Add to group"
                 >
                   <GroupAddIcon fontSizePx={18}/>

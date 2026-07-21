@@ -161,7 +161,18 @@ class GroupController extends Controller
                 'created_at' => $settlement->created_at,
             ]);
 
-        $activity = Collection::make([...$versions, ...$deletions, ...$settlements])
+        $claims = $group->placeholderClaims()
+            ->with('claimant')
+            ->get()
+            ->map(fn ($claim) => [
+                'type' => 'placeholder_claimed',
+                'claimant' => $claim->claimant,
+                'placeholder_username' => $claim->placeholder_username,
+                'placeholder_display_name' => $claim->placeholder_display_name,
+                'created_at' => $claim->created_at,
+            ]);
+
+        $activity = Collection::make([...$versions, ...$deletions, ...$settlements, ...$claims])
             ->sortByDesc('created_at')
             ->values();
 

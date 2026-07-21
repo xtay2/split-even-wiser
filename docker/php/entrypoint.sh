@@ -17,7 +17,7 @@ if [ ! -d vendor ]; then
 fi
 
 # The bind-mounted source tree is owned by the host user, but php-fpm's worker
-# processes run as www-data — keep the runtime-writable dirs open so both can write.
+# processes run as www-data - keep the runtime-writable dirs open so both can write.
 chmod -R ugo+rwX storage bootstrap/cache
 
 if [ ! -f .env ]; then

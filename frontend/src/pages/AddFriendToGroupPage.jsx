@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router'
 import { useGetFriendsQuery } from '../api/friendsApi'
 import { useGetGroupsQuery, useAddGroupMemberMutation } from '../api/groupsApi'
+import { personName } from '../utils/personName'
 import './AddFriendToGroupPage.css'
 
 export default function AddFriendToGroupPage() {
@@ -40,7 +41,7 @@ export default function AddFriendToGroupPage() {
       <Link to="/friends" className="add-to-group-back">
         ← Back to friends
       </Link>
-      <h1 className="add-to-group-title">Add @{friend.user.username} to a group</h1>
+      <h1 className="add-to-group-title">Add {personName(friend.user)} to a group</h1>
 
       {groups.length === 0 ? (
         <p className="friends-empty">You're not in any groups yet.</p>

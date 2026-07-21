@@ -7,7 +7,7 @@ import { ExpirationPlugin } from 'workbox-expiration'
 precacheAndRoute(self.__WB_MANIFEST)
 
 // Deep-linking or hard-reloading into a client-routed URL (e.g. /groups/42) while offline is
-// otherwise a hard network error — nothing precached matches that exact path. Falling back to
+// otherwise a hard network error - nothing precached matches that exact path. Falling back to
 // the cached app shell lets the SPA router take over and render from the API cache below.
 registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html'), { denylist: [/^\/api\//] }))
 

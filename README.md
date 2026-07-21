@@ -18,7 +18,7 @@ docker compose up -d --build
 docker compose exec app php artisan webpush:vapid
 ```
 
-The last step generates a VAPID keypair into `backend/.env` — required before push
+The last step generates a VAPID keypair into `backend/.env` - required before push
 notifications will work (friend requests use them). Restart `app`/`queue` after generating it
 (`docker compose restart app queue`).
 
@@ -33,7 +33,7 @@ docker compose up -d
 
 - Frontend (PWA): http://localhost:5173
 - Backend API: http://localhost:8000/api
-- Sent mail (Mailhog UI — login links land here in dev): http://localhost:8026
+- Sent mail (Mailhog UI - login links land here in dev): http://localhost:8026
 - Postgres: localhost:5433 (off the default 5432 to avoid clashing with a host-local Postgres)
 
 The `app` container's entrypoint installs Composer dependencies, generates `APP_KEY` if
@@ -44,7 +44,7 @@ container runs `npm install && npm run dev` on boot. Both are safe to restart fr
 
 1. Open http://localhost:5173, enter any email, and hit "Send me a login link."
 2. Open http://localhost:8026 (Mailhog), open the mail, click the login link.
-3. First time with that email, you'll be asked to pick a username — after that you're in.
+3. First time with that email, you'll be asked to pick a username - after that you're in.
 4. Create a group, add a friend/member, add an expense, watch the balance update.
 
 ### Tests
@@ -55,7 +55,7 @@ docker compose exec app ./vendor/bin/pest
 
 ## Deploying to production
 
-There's no CI/CD pipeline — deploys are a manual `git pull` on the VPS followed by a couple of
+There's no CI/CD pipeline - deploys are a manual `git pull` on the VPS followed by a couple of
 `docker compose` commands using the prod overlay (`docker-compose.prod.yml`). Always pass both
 compose files together; the base file alone starts the dev-only `frontend` vite server and skips
 `nginx`'s prod config/certbot:
@@ -72,7 +72,7 @@ git pull
 docker compose -f docker-compose.yml -f docker-compose.prod.yml restart app queue
 ```
 
-`backend/` is bind-mounted into `app`/`queue`, so PHP source changes are visible immediately —
+`backend/` is bind-mounted into `app`/`queue`, so PHP source changes are visible immediately -
 restarting re-runs `docker/php/entrypoint.sh`, which applies pending migrations
 (`php artisan migrate --force`) and re-symlinks `public/storage`. The restart mainly matters so
 the long-lived `queue:work` process picks up the new code and so migrations actually run.
@@ -100,7 +100,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm fronten
 ```
 
 This runs `npm ci && npm run build` against `VITE_API_URL=https://split-even-wiser.com/api` and
-writes straight into the volume nginx reads from — no restart needed afterwards.
+writes straight into the volume nginx reads from - no restart needed afterwards.
 
 ### After deploying
 
@@ -108,7 +108,7 @@ writes straight into the volume nginx reads from — no restart needed afterward
 docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f app queue nginx
 ```
 
-`mailserver` and `certbot` only need touching when their own config changes — see
+`mailserver` and `certbot` only need touching when their own config changes - see
 `docker/mailserver/README.md` and `docker/certbot/init-letsencrypt.sh`.
 
 ## Repository layout

@@ -112,6 +112,17 @@
   color: var(--ink-soft);
 }
 
+.balance-person-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: inherit;
+  color: var(--stamp-gold);
+  text-decoration: underline dotted;
+  cursor: pointer;
+}
+
 .balance-settle-btn {
   border: 1px solid var(--ledger-green);
   background: none;
@@ -347,17 +358,78 @@
   margin: 0.5rem 0 0;
   padding: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+  flex-direction: column;
 }
 
-.member-chip {
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.member-row__avatar {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
   background: var(--ledger-green-soft);
   color: var(--ledger-green);
-  border-radius: 999px;
-  padding: 0.25rem 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 0.78rem;
+  font-weight: 700;
+  overflow: hidden;
+}
+
+.member-row__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.member-row--placeholder .member-row__avatar {
+  background: var(--stamp-gold-soft);
+  color: var(--stamp-gold);
+}
+
+.member-row__name {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.member-badge {
+  background: var(--stamp-gold-soft);
+  color: var(--stamp-gold);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.member-row__claim-btn {
+  border: 1px solid var(--stamp-gold);
+  color: var(--stamp-gold);
+  background: none;
+  border-radius: 6px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.member-row__claim-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .group-leave-error {

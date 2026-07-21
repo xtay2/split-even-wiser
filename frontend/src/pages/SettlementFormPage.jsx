@@ -12,7 +12,11 @@ import { selectCurrentUser } from '../features/auth/authSlice'
 import useOnlineStatus from '../features/offline/useOnlineStatus'
 import { queueOfflineAction } from '../features/offline/offlineQueueSlice'
 import { todayIsoDate } from '../utils/expenseDate'
+import { personName } from '../utils/personName'
+import AddPlaceholderDialog from '../components/AddPlaceholderDialog'
 import './ExpenseFormPage.css'
+
+const SOMEONE_ELSE = '__new__'
 
 export default function SettlementFormPage() {
   const { groupId, settlementId } = useParams()
@@ -32,6 +36,7 @@ export default function SettlementFormPage() {
   const [currency, setCurrency] = useState('EUR')
   const [date, setDate] = useState(todayIsoDate)
   const [toUserId, setToUserId] = useState('')
+  const [showAddPlaceholder, setShowAddPlaceholder] = useState(false)
 
   const fromUserId = isEditing ? settlement?.from_user.id : currentUser?.id
   const recipients = (group?.members ?? []).filter((member) => member.id !== fromUserId)
@@ -103,6 +108,19 @@ export default function SettlementFormPage() {
     navigate(`/groups/${groupId}`)
   }
 
+  function handleToUserChange(value) {
+    if (value === SOMEONE_ELSE) {
+      setShowAddPlaceholder(true)
+      return
+    }
+    setToUserId(value)
+  }
+
+  function handlePlaceholderAdded(newMember) {
+    setShowAddPlaceholder(false)
+    setToUserId(newMember.id)
+  }
+
   const error = createError ?? updateError
 
   return (
@@ -151,17 +169,32 @@ export default function SettlementFormPage() {
           Paid to
           <select
             value={toUserId}
-            onChange={(event) => setToUserId(event.target.value)}
+            onChange={(event) => handleToUserChange(event.target.value)}
             required
             className="expense-form-input"
           >
+            {recipients.length === 0 && (
+              <option value="" disabled>
+                Nobody else is in this group yet
+              </option>
+            )}
             {recipients.map((member) => (
               <option key={member.id} value={member.id}>
-                @{member.username}
+                {personName(member, currentUser.id)}
               </option>
             ))}
+            <option value={SOMEONE_ELSE} disabled={!isOnline}>
+              Someone else…
+            </option>
           </select>
         </label>
+
+        <AddPlaceholderDialog
+          open={showAddPlaceholder}
+          groupId={groupId}
+          onAdded={handlePlaceholderAdded}
+          onCancel={() => setShowAddPlaceholder(false)}
+        />
 
         {error && (
           <p className="expense-form-error">
@@ -172,15 +205,15 @@ export default function SettlementFormPage() {
         {!isOnline && (
           <p className="expense-form-offline-note">
             {isEditing
-              ? "You're offline — editing requires an internet connection."
-              : "You're offline — this settlement will be saved and synced automatically once you're back online."}
+              ? "You're offline - editing requires an internet connection."
+              : "You're offline - this settlement will be saved and synced automatically once you're back online."}
           </p>
         )}
 
         <button
           type="submit"
           className="expense-form-submit"
-          disabled={isCreating || isUpdating || recipients.length === 0 || (isEditing && !isOnline)}
+          disabled={isCreating || isUpdating || !toUserId || (isEditing && !isOnline)}
         >
           {isEditing ? 'Save changes' : 'Add settlement'}
         </button>

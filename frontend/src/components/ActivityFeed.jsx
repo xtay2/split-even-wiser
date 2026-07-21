@@ -1,7 +1,8 @@
+import { personName } from '../utils/personName'
 import './ActivityFeed.css'
 
 function describe(entry, currentUserId) {
-  const who = (user) => (user?.id === currentUserId ? 'You' : `@${user?.username}`)
+  const who = (user) => personName(user, currentUserId)
 
   switch (entry.type) {
     case 'expense_version':
@@ -10,6 +11,10 @@ function describe(entry, currentUserId) {
       return `"${entry.title ?? 'An expense'}" was deleted`
     case 'settlement':
       return `${who(entry.from_user)} settled up with ${who(entry.to_user)}`
+    case 'placeholder_claimed': {
+      const placeholderName = entry.placeholder_display_name || `@${entry.placeholder_username}`
+      return `${who(entry.claimant)} claimed ${placeholderName}'s account`
+    }
     default:
       return null
   }

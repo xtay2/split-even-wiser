@@ -72,7 +72,7 @@ class FriendshipController extends Controller
             throw ValidationException::withMessages(['identifier' => 'You are already friends.']);
         }
 
-        // They already sent us a request — accept it instead of creating a duplicate.
+        // They already sent us a request - accept it instead of creating a duplicate.
         $reverseRequest = Friendship::query()
             ->where('requester_id', $target->id)
             ->where('addressee_id', $user->id)

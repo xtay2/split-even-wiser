@@ -33,6 +33,28 @@ export const groupsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Groups'],
     }),
+    addPlaceholderMember: builder.mutation({
+      query: ({ groupId, name, email }) => ({
+        url: `/groups/${groupId}/placeholders`,
+        method: 'POST',
+        body: { name, email },
+      }),
+      invalidatesTags: (result, error, { groupId }) => [{ type: 'Group', id: groupId }],
+    }),
+    claimPlaceholder: builder.mutation({
+      query: ({ groupId, userId }) => ({
+        url: `/groups/${groupId}/placeholders/${userId}/claim`,
+        method: 'POST',
+      }),
+      invalidatesTags: (result, error, { groupId }) => [
+        { type: 'Group', id: groupId },
+        { type: 'Balances', id: groupId },
+        { type: 'Activity', id: groupId },
+        { type: 'Expenses', id: groupId },
+        { type: 'Settlements', id: groupId },
+        'Friends',
+      ],
+    }),
     getBalances: builder.query({
       query: (groupId) => `/groups/${groupId}/balances`,
       providesTags: (result, error, groupId) => [{ type: 'Balances', id: groupId }],
@@ -145,6 +167,8 @@ export const {
   useGetGroupQuery,
   useUpdateGroupMutation,
   useAddGroupMemberMutation,
+  useAddPlaceholderMemberMutation,
+  useClaimPlaceholderMutation,
   useLeaveGroupMutation,
   useGetBalancesQuery,
   useGetActivityQuery,

@@ -87,7 +87,7 @@ services:
                      # mailhog:1025 over the internal docker network regardless)
 
   # A production-shaped mailserver, per the spec ("nutzt docker-mailserver für den
-  # E-Mail-Versand"). Not used by default in local dev — see docker/mailserver/README.md
+  # E-Mail-Versand"). Not used by default in local dev - see docker/mailserver/README.md
   # for how to point the app at it instead of Mailhog.
   mailserver:
     image: docker.io/mailserver/docker-mailserver:latest

@@ -107,6 +107,23 @@
   font-size: 0.9rem;
 }
 
+.expense-form-add-participant {
+  align-self: flex-start;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  background: none;
+  color: var(--ink-soft);
+  padding: 0.35rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.expense-form-add-participant:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .expense-form-split-total {
   font-family: var(--font-mono);
   font-size: 0.85rem;

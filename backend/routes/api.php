@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\FriendshipController;
 use App\Http\Controllers\Api\GroupController;
+use App\Http\Controllers\Api\PlaceholderController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\PushSubscriptionController;
 use App\Http\Controllers\Api\SettlementController;
@@ -41,6 +42,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/groups/{group}', [GroupController::class, 'update']);
     Route::post('/groups/{group}/members', [GroupController::class, 'addMember']);
     Route::delete('/groups/{group}/members/{user}', [GroupController::class, 'leave']);
+    Route::post('/groups/{group}/placeholders', [PlaceholderController::class, 'store']);
+    Route::post('/groups/{group}/placeholders/{user}/claim', [PlaceholderController::class, 'claim']);
     Route::get('/groups/{group}/balances', [GroupController::class, 'balances']);
     Route::get('/groups/{group}/activity', [GroupController::class, 'activity']);
 

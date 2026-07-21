@@ -26,16 +26,18 @@ class LoginToken extends Model
 
     /**
      * Create a new token for the given email, returning the plaintext token.
-     * Only the hash is persisted.
+     * Only the hash is persisted. Regular login links are short-lived (15 minutes); callers
+     * that send a link someone might not open right away (e.g. a group invite email) can pass
+     * a longer TTL.
      */
-    public static function issueFor(string $email): string
+    public static function issueFor(string $email, int $minutes = 15): string
     {
         $plaintext = Str::random(64);
 
         self::create([
             'email' => $email,
             'token_hash' => hash('sha256', $plaintext),
-            'expires_at' => now()->addMinutes(15),
+            'expires_at' => now()->addMinutes($minutes),
         ]);
 
         return $plaintext;

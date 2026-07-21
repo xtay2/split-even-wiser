@@ -10,7 +10,7 @@ class GroupBalanceCalculator
     /**
      * Net balance per user per currency within a group. Positive means the group owes this
      * user money; negative means this user owes the group. Computed on-demand from the current
-     * version of every non-deleted expense plus all settlements — never cached/stored.
+     * version of every non-deleted expense plus all settlements - never cached/stored.
      *
      * @return array<int, array<string, string>> user_id => [currency => decimal string]
      */

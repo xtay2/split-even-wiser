@@ -4,9 +4,10 @@ import { useGetBalancesQuery, useCreateSettlementMutation } from '../api/groupsA
 import useOnlineStatus from '../features/offline/useOnlineStatus'
 import { queueOfflineAction, selectQueueItems } from '../features/offline/offlineQueueSlice'
 import ConfirmDialog from './ConfirmDialog'
+import ClaimPlaceholderDialog from './ClaimPlaceholderDialog'
 import { todayIsoDate } from '../utils/expenseDate'
 
-export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor }) {
+export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor, membersById }) {
   const dispatch = useDispatch()
   const isOnline = useOnlineStatus()
   const queueItems = useSelector(selectQueueItems)
@@ -18,6 +19,19 @@ export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor
   const [isSettlingAll, setIsSettlingAll] = useState(false)
   const [confirmingTransaction, setConfirmingTransaction] = useState(null)
   const [isSettlingOne, setIsSettlingOne] = useState(false)
+  const [claimingMember, setClaimingMember] = useState(null)
+
+  function renderName(userId) {
+    const member = membersById[userId]
+    if (member?.is_placeholder) {
+      return (
+        <button type="button" className="balance-person-link" onClick={() => setClaimingMember(member)}>
+          {nameFor(userId)}
+        </button>
+      )
+    }
+    return nameFor(userId)
+  }
 
   const myBalances = balances.filter(
     (transaction) => transaction.from_user_id === currentUser.id || transaction.to_user_id === currentUser.id,
@@ -124,6 +138,12 @@ export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor
         onCancel={() => setConfirmingTransaction(null)}
       />
 
+      <ClaimPlaceholderDialog
+        member={claimingMember}
+        groupId={groupId}
+        onClose={() => setClaimingMember(null)}
+      />
+
       {myBalances.length === 0 && otherBalances.length === 0 ? (
         <p className="friends-empty">Everyone's settled up.</p>
       ) : (
@@ -144,9 +164,9 @@ export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor
                 <li key={index} className="balance-row">
                   <span>
                     {youOwe ? (
-                      <>You owe <strong>{nameFor(transaction.to_user_id)}</strong></>
+                      <>You owe <strong>{renderName(transaction.to_user_id)}</strong></>
                     ) : (
-                      <><strong>{nameFor(transaction.from_user_id)}</strong> owes you</>
+                      <><strong>{renderName(transaction.from_user_id)}</strong> owes you</>
                     )}
                   </span>
                   <span className={`amount ${youOwe ? 'amount--owed' : 'amount--credit'}`}>
@@ -168,7 +188,7 @@ export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor
             {otherBalances.map((transaction, index) => (
               <li key={`other-${index}`} className="balance-row balance-row--muted">
                 <span>
-                  {nameFor(transaction.from_user_id)} owes {nameFor(transaction.to_user_id)}
+                  {renderName(transaction.from_user_id)} owes {renderName(transaction.to_user_id)}
                 </span>
                 <span className="amount">{transaction.amount} {transaction.currency}</span>
               </li>

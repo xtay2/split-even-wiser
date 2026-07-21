@@ -24,7 +24,7 @@ export default function useOfflineSync() {
           dispatch(itemSyncSucceeded({ id: item.id }))
         } catch (error) {
           if (error?.status === 'FETCH_ERROR' || error?.status === 'TIMEOUT_ERROR') {
-            // Connection dropped again mid-sync — stop here, the next 'online' event retries.
+            // Connection dropped again mid-sync - stop here, the next 'online' event retries.
             break
           }
           dispatch(

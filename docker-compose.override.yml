@@ -3,7 +3,7 @@
 #
 # Local dev sends mail through Mailhog (view at http://localhost:8026) rather than
 # the docker-mailserver container, which is heavier and only worth exercising when
-# you actually need to test real SMTP delivery/DKIM/etc — see docker/mailserver/README.
+# you actually need to test real SMTP delivery/DKIM/etc - see docker/mailserver/README.
 # Keeping these out of docker-compose.yml itself means backend/.env's MAIL_* values
 # (e.g. in prod) are no longer silently shadowed by these.
 services:

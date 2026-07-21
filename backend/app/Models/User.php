@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -27,6 +28,10 @@ class User extends Authenticatable
         'username',
         'email',
         'avatar_path',
+        'display_name',
+        'is_placeholder',
+        'invited_by',
+        'claimed_at',
     ];
 
     /**
@@ -38,9 +43,22 @@ class User extends Authenticatable
         'avatar_url',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'is_placeholder' => 'boolean',
+            'claimed_at' => 'datetime',
+        ];
+    }
+
     public function getAvatarUrlAttribute(): ?string
     {
         return $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null;
+    }
+
+    public function invitedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'invited_by');
     }
 
     public function sentFriendRequests(): HasMany

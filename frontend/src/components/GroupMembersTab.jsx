@@ -2,10 +2,13 @@ import {useEffect, useRef, useState} from 'react'
 import { useAddGroupMemberMutation } from '../api/groupsApi'
 import { useGetFriendsQuery } from '../api/friendsApi'
 import { GroupAddIcon } from './icons/GroupAddIcon'
+import { personName } from '../utils/personName'
+import ClaimPlaceholderDialog from './ClaimPlaceholderDialog'
 
-export default function GroupMembersTab({ hidden, groupId, group, isOnline }) {
+export default function GroupMembersTab({ hidden, groupId, group, currentUser, isOnline }) {
   const { data: friends = [] } = useGetFriendsQuery()
   const [addMember, { isLoading: isAdding, error: addError }] = useAddGroupMemberMutation()
+  const [claimingMember, setClaimingMember] = useState(null)
   const memberInputRef = useRef(null);
   const [memberIdentifier, setMemberIdentifier] = useState('')
   const [showAddMember, setShowAddMember] = useState(false)
@@ -18,7 +21,8 @@ export default function GroupMembersTab({ hidden, groupId, group, isOnline }) {
         .filter(({ user }) => !membersById[user.id])
         .filter(
           ({ user }) =>
-            user.username.toLowerCase().includes(memberQuery) || user.email.toLowerCase().includes(memberQuery),
+            user.username.toLowerCase().includes(memberQuery) ||
+            (user.email ?? '').toLowerCase().includes(memberQuery),
         )
         .slice(0, 5)
     : []
@@ -72,7 +76,7 @@ export default function GroupMembersTab({ hidden, groupId, group, isOnline }) {
                         setShowSuggestions(false)
                       }}
                     >
-                      <span className="member-suggest-item__name">@{user.username}</span>
+                      <span className="member-suggest-item__name">{personName(user)}</span>
                       <span className="member-suggest-item__email">{user.email}</span>
                     </button>
                   </li>
@@ -88,9 +92,37 @@ export default function GroupMembersTab({ hidden, groupId, group, isOnline }) {
       {addError && <p className="friends-error">{addError.data?.errors?.identifier?.[0] ?? 'Could not add member.'}</p>}
       <ul className="member-list">
         {group.members.map((member) => (
-          <li key={member.id} className="member-chip">@{member.username}</li>
+          <li key={member.id} className={`member-row${member.is_placeholder ? ' member-row--placeholder' : ''}`}>
+            <span className="member-row__avatar">
+              {member.avatar_url ? (
+                <img src={member.avatar_url} alt="" />
+              ) : (
+                (member.display_name || member.username).slice(0, 2).toUpperCase()
+              )}
+            </span>
+            <span className="member-row__name">
+              {personName(member, currentUser.id)}
+              {member.is_placeholder && <span className="member-badge">Placeholder</span>}
+            </span>
+            {member.is_placeholder && member.id !== currentUser.id && (
+              <button
+                type="button"
+                className="member-row__claim-btn"
+                onClick={() => setClaimingMember(member)}
+                disabled={!isOnline}
+              >
+                That's me
+              </button>
+            )}
+          </li>
         ))}
       </ul>
+
+      <ClaimPlaceholderDialog
+        member={claimingMember}
+        groupId={groupId}
+        onClose={() => setClaimingMember(null)}
+      />
 
       <div className="group-fab-column">
         <button

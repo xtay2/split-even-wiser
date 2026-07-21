@@ -19,7 +19,7 @@ const initialState = loadPersisted()
 
 // Payments and settlements made while offline are queued here (keyed by a client-generated
 // UUID) and replayed against the API once the connection returns. Anything that requires an
-// immediate, consistent server response — like leaving a group — is deliberately not queueable.
+// immediate, consistent server response - like leaving a group - is deliberately not queueable.
 const offlineQueueSlice = createSlice({
   name: 'offlineQueue',
   initialState,

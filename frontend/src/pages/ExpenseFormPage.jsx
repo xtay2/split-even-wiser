@@ -12,7 +12,11 @@ import { selectCurrentUser } from '../features/auth/authSlice'
 import useOnlineStatus from '../features/offline/useOnlineStatus'
 import { queueOfflineAction } from '../features/offline/offlineQueueSlice'
 import { todayIsoDate } from '../utils/expenseDate'
+import { personName } from '../utils/personName'
+import AddPlaceholderDialog from '../components/AddPlaceholderDialog'
 import './ExpenseFormPage.css'
+
+const SOMEONE_ELSE = '__new__'
 
 // Distributes `totalCents` evenly across `count` shares, handing any remainder cent(s)
 // to the first shares so the parts always sum exactly back to the total.
@@ -40,7 +44,7 @@ function persistParticipants(groupId, participants) {
     )
     localStorage.setItem(PARTICIPANTS_STORAGE_PREFIX + groupId, JSON.stringify(included))
   } catch {
-    // localStorage may be unavailable (e.g. private browsing) — selection just won't persist
+    // localStorage may be unavailable (e.g. private browsing) - selection just won't persist
   }
 }
 
@@ -71,6 +75,7 @@ export default function ExpenseFormPage() {
   const [paidBy, setPaidBy] = useState(currentUser?.id)
   const [splitMode, setSplitMode] = useState('equal')
   const [participants, setParticipants] = useState({}) // user_id -> { included, amount }
+  const [placeholderDialogFor, setPlaceholderDialogFor] = useState(null) // null | 'paidBy' | 'participant'
 
   useEffect(() => {
     if (group && Object.keys(participants).length === 0) {
@@ -139,6 +144,23 @@ export default function ExpenseFormPage() {
     setParticipants((prev) => ({ ...prev, [userId]: { ...prev[userId], amount: value } }))
   }
 
+  function handlePaidByChange(value) {
+    if (value === SOMEONE_ELSE) {
+      setPlaceholderDialogFor('paidBy')
+      return
+    }
+    setPaidBy(Number(value))
+  }
+
+  function handlePlaceholderAdded(newMember) {
+    const source = placeholderDialogFor
+    setPlaceholderDialogFor(null)
+    if (source === 'paidBy') {
+      setPaidBy(newMember.id)
+    }
+    setParticipants((prev) => ({ ...prev, [newMember.id]: { included: true, amount: '' } }))
+  }
+
   function buildShares() {
     if (splitMode === 'equal') {
       const totalCents = Math.round(Number(amount) * 100)
@@ -187,7 +209,7 @@ export default function ExpenseFormPage() {
       navigate(`/groups/${groupId}`)
     } catch (submitError) {
       if (submitError?.status === 'FETCH_ERROR') {
-        // The browser thought it was online but the request didn't make it — fall back to
+        // The browser thought it was online but the request didn't make it - fall back to
         // queueing rather than losing what the user entered.
         dispatch(queueOfflineAction({ type: 'expense', groupId, payload, label: title }))
         navigate(`/groups/${groupId}`)
@@ -264,16 +286,26 @@ export default function ExpenseFormPage() {
           Paid by
           <select
             value={paidBy}
-            onChange={(event) => setPaidBy(Number(event.target.value))}
+            onChange={(event) => handlePaidByChange(event.target.value)}
             className="expense-form-input"
           >
             {group.members.map((member) => (
               <option key={member.id} value={member.id}>
-                {member.id === currentUser.id ? 'You' : `@${member.username}`}
+                {personName(member, currentUser.id)}
               </option>
             ))}
+            <option value={SOMEONE_ELSE} disabled={!isOnline}>
+              Someone else…
+            </option>
           </select>
         </label>
+
+        <AddPlaceholderDialog
+          open={placeholderDialogFor !== null}
+          groupId={groupId}
+          onAdded={handlePlaceholderAdded}
+          onCancel={() => setPlaceholderDialogFor(null)}
+        />
 
         <fieldset className="expense-form-fieldset">
           <legend>Split between</legend>
@@ -303,12 +335,12 @@ export default function ExpenseFormPage() {
                     checked={participants[member.id]?.included ?? false}
                     onChange={() => toggleParticipant(member.id)}
                   />
-                  {member.id === currentUser.id ? 'You' : `@${member.username}`}
+                  {personName(member, currentUser.id)}
                 </label>
               ) : (
                 <>
                   <span className="expense-form-participant__name">
-                    {member.id === currentUser.id ? 'You' : `@${member.username}`}
+                    {personName(member, currentUser.id)}
                   </span>
                   <input
                     type="number"
@@ -322,6 +354,15 @@ export default function ExpenseFormPage() {
               )}
             </div>
           ))}
+
+          <button
+            type="button"
+            className="expense-form-add-participant"
+            onClick={() => setPlaceholderDialogFor('participant')}
+            disabled={!isOnline}
+          >
+            + Someone else…
+          </button>
 
           {splitMode === 'custom' && amount && (
             <p className={`expense-form-split-total ${customTotal.toFixed(2) === Number(amount).toFixed(2) ? '' : 'is-mismatched'}`}>
@@ -339,8 +380,8 @@ export default function ExpenseFormPage() {
         {!isOnline && (
           <p className="expense-form-offline-note">
             {isEditing
-              ? "You're offline — editing requires an internet connection."
-              : "You're offline — this expense will be saved and synced automatically once you're back online."}
+              ? "You're offline - editing requires an internet connection."
+              : "You're offline - this expense will be saved and synced automatically once you're back online."}
           </p>
         )}
 

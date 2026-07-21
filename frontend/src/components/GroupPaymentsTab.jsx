@@ -5,7 +5,7 @@ import { buildLedgerItems, groupItemsByMonth, getMyExpenseNet } from '../utils/g
 import { PaymentsIcon } from './icons/PaymentsIcon.tsx'
 import { ReceiptLongIcon } from './icons/ReceiptLongIcon.tsx'
 
-export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor, hasOtherMembers }) {
+export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor }) {
   const navigate = useNavigate()
   const { data: expenses = [] } = useGetExpensesQuery(groupId)
   const { data: settlements = [] } = useGetSettlementsQuery(groupId)
@@ -113,28 +113,14 @@ export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor
       )}
 
       <div className="group-fab-column">
-        {hasOtherMembers ? (
-          <Link to={`/groups/${groupId}/expenses/new`} className="group-fab group-fab--right">
-            <ReceiptLongIcon />
-            New expense
-          </Link>
-        ) : (
-          <button type="button" className="group-fab group-fab--right" disabled title="Invite other people to add expenses">
-            <ReceiptLongIcon />
-            New expense
-          </button>
-        )}
-        {hasOtherMembers ? (
-          <Link to={`/groups/${groupId}/settlements/new`} className="group-fab group-fab--right">
-            <PaymentsIcon />
-            New settlement
-          </Link>
-        ) : (
-          <button type="button" className="group-fab group-fab--right" disabled title="Invite other people to add settlements">
-            <PaymentsIcon />
-            New settlement
-          </button>
-        )}
+        <Link to={`/groups/${groupId}/expenses/new`} className="group-fab group-fab--right">
+          <ReceiptLongIcon />
+          New expense
+        </Link>
+        <Link to={`/groups/${groupId}/settlements/new`} className="group-fab group-fab--right">
+          <PaymentsIcon />
+          New settlement
+        </Link>
       </div>
     </section>
   )

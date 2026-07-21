@@ -1,0 +1,30 @@
+.add-placeholder-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.add-placeholder-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.add-placeholder-input {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 400;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.add-placeholder-error {
+  margin: 0;
+  color: var(--owed-red);
+  font-size: 0.82rem;
+}

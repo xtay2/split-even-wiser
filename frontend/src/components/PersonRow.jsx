@@ -1,3 +1,4 @@
+import { personName } from '../utils/personName'
 import './PersonRow.css'
 
 export default function PersonRow({ person, children }) {
@@ -7,10 +8,10 @@ export default function PersonRow({ person, children }) {
         {person.avatar_url ? (
           <img src={person.avatar_url} alt="" />
         ) : (
-          person.username.slice(0, 2).toUpperCase()
+          (person.display_name || person.username).slice(0, 2).toUpperCase()
         )}
       </span>
-      <span className="person-row__name">@{person.username}</span>
+      <span className="person-row__name">{personName(person)}</span>
       <span className="person-row__actions">{children}</span>
     </li>
   )

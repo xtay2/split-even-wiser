@@ -52,4 +52,9 @@ class Group extends Model
     {
         return $this->hasMany(Settlement::class);
     }
+
+    public function placeholderClaims(): HasMany
+    {
+        return $this->hasMany(PlaceholderClaim::class);
+    }
 }

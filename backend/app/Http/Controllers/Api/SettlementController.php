@@ -44,7 +44,7 @@ class SettlementController extends Controller
             }
         }
 
-        // You can only declare your own debts settled, per the spec — settlements are
+        // You can only declare your own debts settled, per the spec - settlements are
         // recorded as being made by the currently authenticated user.
         $settlement = $group->settlements()->create([
             'from_user_id' => $request->user()->id,
@@ -64,7 +64,7 @@ class SettlementController extends Controller
         $this->authorizeSettlementInGroup($group, $settlement);
         $this->authorize('update', $settlement);
 
-        // The "from" side of a settlement is fixed at creation — only the recipient,
+        // The "from" side of a settlement is fixed at creation - only the recipient,
         // amount, currency, and date can be corrected afterwards.
         $data = $this->validatePayload($request, $group, $settlement->from_user_id);
 

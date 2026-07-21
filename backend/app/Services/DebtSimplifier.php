@@ -13,7 +13,7 @@ class DebtSimplifier
     /**
      * Reduces a group's net balances to the minimal set of payments needed to settle
      * everyone up, per currency. Debts are never mixed across currencies (per product
-     * decision — no FX conversion). This is what makes "A owes B, B owes C" collapse to
+     * decision - no FX conversion). This is what makes "A owes B, B owes C" collapse to
      * "A owes C" in the spec's example, since B's net balance nets out to zero.
      *
      * @return array<int, array{from_user_id: int, to_user_id: int, amount: string, currency: string}>
@@ -45,7 +45,7 @@ class DebtSimplifier
 
     /**
      * Greedily matches the largest creditor against the largest debtor until every
-     * balance nets to zero — the standard practical "simplify debts" algorithm.
+     * balance nets to zero - the standard practical "simplify debts" algorithm.
      *
      * @param  array<int, string>  $balances  user_id => signed decimal amount
      * @return array<int, array{from_user_id: int, to_user_id: int, amount: string}>

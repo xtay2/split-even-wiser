@@ -23,7 +23,7 @@ export default function LoginPage() {
         {sent ? (
           <div className="login-sent">
             <p>
-              If <strong>{email}</strong> has an account (or doesn't yet — we'll help you make
+              If <strong>{email}</strong> has an account (or doesn't yet - we'll help you make
               one), a login link is on its way.
             </p>
             <button type="button" className="login-link-btn" onClick={() => setSent(false)}>

@@ -18,7 +18,7 @@ const PUSH_STATUS_LABEL = {
   idle: 'Enable push notifications',
   subscribing: 'Enabling…',
   subscribed: 'Notifications enabled',
-  denied: 'Notifications blocked — check your browser settings',
+  denied: 'Notifications blocked - check your browser settings',
   error: 'Could not enable notifications',
 }
 
@@ -152,7 +152,7 @@ export default function ProfilePage() {
             </button>
             {pendingEmail && (
               <p className="profile-hint">
-                Confirmation link sent to {pendingEmail} — check your inbox to finish the change.
+                Confirmation link sent to {pendingEmail} - check your inbox to finish the change.
               </p>
             )}
           </dd>
