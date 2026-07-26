@@ -9,12 +9,12 @@ use Illuminate\Notifications\Notification;
 use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 
-class FriendRequestReceived extends Notification implements ShouldQueue
+class FriendRequestAccepted extends Notification implements ShouldQueue
 {
     use Queueable;
 
     public function __construct(
-        public readonly User $requester,
+        public readonly User $accepter,
     ) {}
 
     /**
@@ -28,9 +28,9 @@ class FriendRequestReceived extends Notification implements ShouldQueue
     public function toWebPush(object $notifiable, self $notification): WebPushMessage
     {
         return (new WebPushMessage)
-            ->title('New friend request')
-            ->body("{$this->requester->username} wants to be your friend.")
-            ->data(['friendship_requester_id' => $this->requester->id, 'url' => '/friends'])
+            ->title('Friend request accepted')
+            ->body("{$this->accepter->username} accepted your friend request.")
+            ->data(['accepter_id' => $this->accepter->id, 'url' => '/friends'])
             ->action('View', 'view_friend_request');
     }
 
@@ -40,8 +40,8 @@ class FriendRequestReceived extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'requester_id' => $this->requester->id,
-            'requester_username' => $this->requester->username,
+            'accepter_id' => $this->accepter->id,
+            'accepter_username' => $this->accepter->username,
         ];
     }
 }

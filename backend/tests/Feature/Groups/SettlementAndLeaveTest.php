@@ -4,6 +4,8 @@ use App\Models\Expense;
 use App\Models\Group;
 use App\Models\Settlement;
 use App\Models\User;
+use App\Notifications\SettlementRecorded;
+use Illuminate\Support\Facades\Notification;
 
 it('records a settlement made by the authenticated user', function () {
     $alice = User::factory()->create();
@@ -20,6 +22,22 @@ it('records a settlement made by the authenticated user', function () {
     $response->assertCreated()
         ->assertJsonPath('from_user_id', $alice->id)
         ->assertJsonPath('to_user_id', $bob->id);
+});
+
+it('notifies the recipient of the settlement', function () {
+    Notification::fake();
+    $alice = User::factory()->create();
+    $bob = User::factory()->create();
+    $group = groupWithMembers($alice, $bob);
+
+    $this->actingAs($alice)->postJson("/api/groups/{$group->id}/settlements", [
+        'to_user_id' => $bob->id,
+        'amount' => 10,
+        'currency' => 'EUR',
+        'date' => '2026-07-16',
+    ]);
+
+    Notification::assertSentTo($bob, SettlementRecorded::class);
 });
 
 it('is idempotent when the same client_uuid is replayed, for offline sync retries', function () {

@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\Group;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -9,12 +10,13 @@ use Illuminate\Notifications\Notification;
 use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 
-class FriendRequestReceived extends Notification implements ShouldQueue
+class AddedToGroup extends Notification implements ShouldQueue
 {
     use Queueable;
 
     public function __construct(
-        public readonly User $requester,
+        public readonly Group $group,
+        public readonly User $addedBy,
     ) {}
 
     /**
@@ -28,10 +30,10 @@ class FriendRequestReceived extends Notification implements ShouldQueue
     public function toWebPush(object $notifiable, self $notification): WebPushMessage
     {
         return (new WebPushMessage)
-            ->title('New friend request')
-            ->body("{$this->requester->username} wants to be your friend.")
-            ->data(['friendship_requester_id' => $this->requester->id, 'url' => '/friends'])
-            ->action('View', 'view_friend_request');
+            ->title('Added to group')
+            ->body("{$this->addedBy->username} added you to \"{$this->group->name}\".")
+            ->data(['group_id' => $this->group->id, 'url' => "/groups/{$this->group->id}"])
+            ->action('View', 'view_group');
     }
 
     /**
@@ -40,8 +42,8 @@ class FriendRequestReceived extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'requester_id' => $this->requester->id,
-            'requester_username' => $this->requester->username,
+            'group_id' => $this->group->id,
+            'added_by_id' => $this->addedBy->id,
         ];
     }
 }

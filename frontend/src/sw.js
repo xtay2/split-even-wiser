@@ -6,6 +6,14 @@ import { ExpirationPlugin } from 'workbox-expiration'
 
 precacheAndRoute(self.__WB_MANIFEST)
 
+// There's no in-app update prompt, so without this a newly deployed service worker (e.g.
+// carrying a fix like the push cache exclusion below) sits in "waiting" until every open tab
+// is closed - the old worker keeps controlling the page and serving stale responses in the
+// meantime. Activating and taking control immediately means a reload is enough to pick up
+// worker changes.
+self.skipWaiting()
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()))
+
 // Deep-linking or hard-reloading into a client-routed URL (e.g. /groups/42) while offline is
 // otherwise a hard network error - nothing precached matches that exact path. Falling back to
 // the cached app shell lets the SPA router take over and render from the API cache below.
@@ -17,7 +25,14 @@ export const API_CACHE_NAME = 'api-cache'
 // visible while offline; a short network timeout keeps things snappy once back online instead
 // of waiting out a slow/broken connection before falling back to cache.
 registerRoute(
-  ({ request, url }) => request.method === 'GET' && url.pathname.startsWith('/api/'),
+  ({ request, url }) =>
+    request.method === 'GET' &&
+    url.pathname.startsWith('/api/') &&
+    // The VAPID public key must always come from the network - if it's ever served stale
+    // (e.g. cached from before VAPID_PUBLIC_KEY was configured), pushManager.subscribe()
+    // rejects with "Invalid raw ECDSA P-256 public key" and there's no way to recover
+    // without clearing the cache by hand.
+    !url.pathname.startsWith('/api/push/'),
   new NetworkFirst({
     cacheName: API_CACHE_NAME,
     networkTimeoutSeconds: 4,
@@ -45,5 +60,16 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  event.waitUntil(self.clients.openWindow('/'))
+
+  const url = event.notification.data?.url ?? '/'
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      const existing = clients.find((client) => new URL(client.url).origin === self.location.origin)
+      if (existing) {
+        return existing.navigate(url).then((client) => client.focus())
+      }
+      return self.clients.openWindow(url)
+    }),
+  )
 })

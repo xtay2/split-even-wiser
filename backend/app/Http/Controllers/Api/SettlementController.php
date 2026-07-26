@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\Settlement;
+use App\Notifications\SettlementRecorded;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -55,6 +56,14 @@ class SettlementController extends Controller
             'created_by' => $request->user()->id,
             'client_uuid' => $data['client_uuid'] ?? null,
         ]);
+
+        $settlement->toUser->notify(new SettlementRecorded(
+            $group,
+            $settlement,
+            $request->user(),
+            (string) $settlement->amount,
+            $settlement->currency,
+        ));
 
         return response()->json($settlement->fresh(['fromUser', 'toUser']), 201);
     }

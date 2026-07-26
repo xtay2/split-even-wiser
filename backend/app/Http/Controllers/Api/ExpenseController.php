@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Expense;
 use App\Models\Group;
+use App\Models\User;
+use App\Notifications\ExpenseAdded;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -63,10 +65,11 @@ class ExpenseController extends Controller
             return $expense;
         });
 
-        return response()->json(
-            $expense->fresh(['currentVersion.shares', 'currentVersion.payer', 'creator']),
-            201,
-        );
+        $expense = $expense->fresh(['currentVersion.shares', 'currentVersion.payer', 'creator']);
+
+        $this->notifyGroupMembers($group, $expense, $request->user());
+
+        return response()->json($expense, 201);
     }
 
     public function show(Request $request, Group $group, Expense $expense): JsonResponse
@@ -187,5 +190,22 @@ class ExpenseController extends Controller
     private function authorizeExpenseInGroup(Group $group, Expense $expense): void
     {
         abort_unless($expense->group_id === $group->id, 404);
+    }
+
+    private function notifyGroupMembers(Group $group, Expense $expense, User $creator): void
+    {
+        $group->groupMembers()
+            ->whereNull('left_at')
+            ->where('user_id', '!=', $creator->id)
+            ->with('user')
+            ->get()
+            ->each(fn ($member) => $member->user->notify(new ExpenseAdded(
+                $group,
+                $expense,
+                $creator,
+                $expense->currentVersion->title,
+                (string) $expense->currentVersion->amount,
+                $expense->currentVersion->currency,
+            )));
     }
 }

@@ -27,6 +27,10 @@ export default defineConfig({
       devOptions: {
         enabled: true,
         type: 'module',
+        // Without this, self.__WB_MANIFEST is injected as an empty array in dev, so
+        // createHandlerBoundToURL('index.html') below throws at service-worker script
+        // evaluation time (nothing is precached to bind the handler to).
+        navigateFallback: 'index.html',
       },
     }),
   ],

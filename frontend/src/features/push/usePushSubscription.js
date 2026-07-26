@@ -68,7 +68,8 @@ export function usePushSubscription() {
       }).unwrap()
 
       setStatus('subscribed')
-    } catch {
+    } catch (error) {
+      console.error('Failed to enable push notifications:', error)
       setStatus('error')
     }
   }

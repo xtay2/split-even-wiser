@@ -2,6 +2,7 @@
 
 use App\Models\Friendship;
 use App\Models\User;
+use App\Notifications\FriendRequestAccepted;
 use App\Notifications\FriendRequestReceived;
 use Illuminate\Support\Facades\Notification;
 
@@ -49,6 +50,17 @@ it('auto-accepts when the target already sent a pending request', function () {
     $response->assertOk()->assertJsonPath('status', 'accepted');
     expect(Friendship::where(['requester_id' => $bob->id, 'addressee_id' => $alice->id])->first()->status)
         ->toBe('accepted');
+});
+
+it('notifies the original requester when their request is auto-accepted', function () {
+    Notification::fake();
+    $alice = User::factory()->create();
+    $bob = User::factory()->create(['username' => 'bob']);
+    Friendship::create(['requester_id' => $bob->id, 'addressee_id' => $alice->id, 'status' => 'pending']);
+
+    $this->actingAs($alice)->postJson('/api/friends/requests', ['identifier' => 'bob']);
+
+    Notification::assertSentTo($bob, FriendRequestAccepted::class);
 });
 
 it('rejects a duplicate friend request when already friends', function () {
@@ -102,6 +114,17 @@ it('accepts an incoming friend request', function () {
 
     $this->actingAs($bob)->postJson("/api/friends/requests/{$friendship->id}/accept")
         ->assertOk()->assertJsonPath('status', 'accepted');
+});
+
+it('notifies the requester when their friend request is accepted', function () {
+    Notification::fake();
+    $alice = User::factory()->create();
+    $bob = User::factory()->create();
+    $friendship = Friendship::create(['requester_id' => $alice->id, 'addressee_id' => $bob->id, 'status' => 'pending']);
+
+    $this->actingAs($bob)->postJson("/api/friends/requests/{$friendship->id}/accept");
+
+    Notification::assertSentTo($alice, FriendRequestAccepted::class);
 });
 
 it('prevents the requester from accepting their own request', function () {

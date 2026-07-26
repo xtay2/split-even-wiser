@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Friendship;
 use App\Models\User;
+use App\Notifications\FriendRequestAccepted;
 use App\Notifications\FriendRequestReceived;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -82,6 +83,8 @@ class FriendshipController extends Controller
         if ($reverseRequest) {
             $reverseRequest->update(['status' => 'accepted']);
 
+            $target->notify(new FriendRequestAccepted($user));
+
             return response()->json($reverseRequest->fresh(['requester', 'addressee']));
         }
 
@@ -100,6 +103,8 @@ class FriendshipController extends Controller
         $this->authorizeAddressee($request, $friendship);
 
         $friendship->update(['status' => 'accepted']);
+
+        $friendship->requester->notify(new FriendRequestAccepted($request->user()));
 
         return response()->json($friendship->fresh(['requester', 'addressee']));
     }

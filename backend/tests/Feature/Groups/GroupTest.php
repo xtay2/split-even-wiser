@@ -2,6 +2,8 @@
 
 use App\Models\Group;
 use App\Models\User;
+use App\Notifications\AddedToGroup;
+use Illuminate\Support\Facades\Notification;
 
 it('creates a group and auto-joins the creator as a member', function () {
     $user = User::factory()->create();
@@ -54,6 +56,18 @@ it('lets an existing member add another user by username', function () {
 
     $response->assertOk();
     expect($group->groupMembers()->where('user_id', $newcomer->id)->whereNull('left_at')->exists())->toBeTrue();
+});
+
+it('notifies the newly added member', function () {
+    Notification::fake();
+    $member = User::factory()->create();
+    $newcomer = User::factory()->create(['username' => 'newcomer']);
+    $group = Group::factory()->create();
+    $group->groupMembers()->create(['user_id' => $member->id, 'joined_at' => now()]);
+
+    $this->actingAs($member)->postJson("/api/groups/{$group->id}/members", ['identifier' => 'newcomer']);
+
+    Notification::assertSentTo($newcomer, AddedToGroup::class);
 });
 
 it('forbids a non-member from adding people to a group', function () {

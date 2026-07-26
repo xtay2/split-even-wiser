@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\User;
+use App\Notifications\AddedToGroup;
 use App\Services\DebtSimplifier;
 use App\Services\GroupBalanceCalculator;
 use Illuminate\Http\JsonResponse;
@@ -88,6 +89,8 @@ class GroupController extends Controller
         } else {
             $group->groupMembers()->create(['user_id' => $target->id, 'joined_at' => now()]);
         }
+
+        $target->notify(new AddedToGroup($group, $request->user()));
 
         return response()->json($group->fresh('members'));
     }

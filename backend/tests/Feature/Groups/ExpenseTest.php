@@ -2,6 +2,8 @@
 
 use App\Models\Expense;
 use App\Models\User;
+use App\Notifications\ExpenseAdded;
+use Illuminate\Support\Facades\Notification;
 
 it('creates an expense split evenly and records it as version 1', function () {
     $alice = User::factory()->create();
@@ -29,6 +31,29 @@ it('creates an expense split evenly and records it as version 1', function () {
     $expense = Expense::first();
     expect($expense->versions()->count())->toBe(1);
     expect($expense->currentVersion->shares()->count())->toBe(2);
+});
+
+it('notifies other active group members but not the creator', function () {
+    Notification::fake();
+    $alice = User::factory()->create();
+    $bob = User::factory()->create();
+    $carol = User::factory()->create();
+    $group = groupWithMembers($alice, $bob, $carol);
+
+    $this->actingAs($alice)->postJson("/api/groups/{$group->id}/expenses", [
+        'title' => 'Dinner',
+        'amount' => 20,
+        'currency' => 'EUR',
+        'date' => '2026-07-10',
+        'shares' => [
+            ['user_id' => $alice->id, 'amount' => 10],
+            ['user_id' => $bob->id, 'amount' => 10],
+        ],
+    ]);
+
+    Notification::assertSentTo($bob, ExpenseAdded::class);
+    Notification::assertSentTo($carol, ExpenseAdded::class);
+    Notification::assertNotSentTo($alice, ExpenseAdded::class);
 });
 
 it('rejects an expense whose shares do not sum to the total amount', function () {
