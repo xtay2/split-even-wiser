@@ -1,7 +1,7 @@
 .group-detail-screen {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
+  gap: 1.5rem;
 }
 
 .group-detail-header {
@@ -66,7 +66,7 @@
 
 .group-search {
   display: flex;
-  margin-bottom: 0.9rem;
+  margin-bottom: 1.5rem;
 }
 
 .group-search-input {
