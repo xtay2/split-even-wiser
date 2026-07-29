@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useGetExpensesQuery, useGetSettlementsQuery } from '../api/groupsApi'
 import { formatExpenseDate } from '../utils/expenseDate'
@@ -5,16 +6,29 @@ import { buildLedgerItems, filterLedgerItems, groupItemsByMonth, getMyExpenseNet
 import { PaymentsIcon } from './icons/PaymentsIcon.tsx'
 import { ReceiptLongIcon } from './icons/ReceiptLongIcon.tsx'
 
-export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor, searchQuery = '' }) {
+export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor }) {
   const navigate = useNavigate()
   const { data: expenses = [] } = useGetExpensesQuery(groupId)
   const { data: settlements = [] } = useGetSettlementsQuery(groupId)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const items = buildLedgerItems(expenses, settlements)
   const filteredItems = filterLedgerItems(items, searchQuery)
 
   return (
     <section hidden={hidden} className="payments-section">
+      {items.length > 0 && (
+        <div className="group-search">
+          <input
+            type="search"
+            className="group-search-input"
+            placeholder="Search expenses & settlements..."
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            aria-label="Search expenses and settlements"
+          />
+        </div>
+      )}
       {items.length === 0 ? (
         <p className="friends-empty">No expenses yet.</p>
       ) : filteredItems.length === 0 ? (
