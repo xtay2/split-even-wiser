@@ -32,7 +32,6 @@ export default function GroupDetailPage() {
 
   const [activeTab, setActiveTab] = useState(null)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
 
   if (groupError?.status === 403 || groupError?.status === 404) {
     return <Navigate to="/groups" replace />
@@ -106,17 +105,6 @@ export default function GroupDetailPage() {
         onCancel={() => setShowLeaveConfirm(false)}
       />
 
-      <div className="group-search">
-        <input
-          type="search"
-          className="group-search-input"
-          placeholder="Search expenses & settlements..."
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-          aria-label="Search expenses and settlements"
-        />
-      </div>
-
       <nav className="group-tabs">
         {TABS.map((tab) => (
           <button
@@ -144,7 +132,6 @@ export default function GroupDetailPage() {
         groupId={groupId}
         currentUser={currentUser}
         nameFor={nameFor}
-        searchQuery={searchQuery}
       />
       <GroupMembersTab
         hidden={effectiveTab !== 'members'}
