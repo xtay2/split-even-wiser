@@ -1,21 +1,26 @@
 import { Link, useNavigate } from 'react-router'
 import { useGetExpensesQuery, useGetSettlementsQuery } from '../api/groupsApi'
 import { formatExpenseDate } from '../utils/expenseDate'
-import { buildLedgerItems, groupItemsByMonth, getMyExpenseNet } from '../utils/groupLedger'
+import { buildLedgerItems, filterLedgerItems, groupItemsByMonth, getMyExpenseNet } from '../utils/groupLedger'
 import { PaymentsIcon } from './icons/PaymentsIcon.tsx'
 import { ReceiptLongIcon } from './icons/ReceiptLongIcon.tsx'
 
-export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor }) {
+export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor, searchQuery = '' }) {
   const navigate = useNavigate()
   const { data: expenses = [] } = useGetExpensesQuery(groupId)
   const { data: settlements = [] } = useGetSettlementsQuery(groupId)
 
+  const items = buildLedgerItems(expenses, settlements)
+  const filteredItems = filterLedgerItems(items, searchQuery)
+
   return (
     <section hidden={hidden} className="payments-section">
-      {expenses.length === 0 && settlements.length === 0 ? (
+      {items.length === 0 ? (
         <p className="friends-empty">No expenses yet.</p>
+      ) : filteredItems.length === 0 ? (
+        <p className="friends-empty">No expenses or settlements match your search.</p>
       ) : (
-        groupItemsByMonth(buildLedgerItems(expenses, settlements)).map((group) => (
+        groupItemsByMonth(filteredItems).map((group) => (
           <div key={group.key} className="expense-month-group">
             <h3 className="expense-month-heading">{group.label}</h3>
             <ul className="expense-list">

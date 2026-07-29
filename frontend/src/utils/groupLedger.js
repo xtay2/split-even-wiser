@@ -1,4 +1,4 @@
-import { formatMonthLabel, monthKey } from './expenseDate'
+import { formatExpenseDate, formatMonthLabel, monthKey } from './expenseDate'
 
 // Normalizes expenses and settlements into a single shape so they can be listed and
 // sorted together, newest first, in the "Payments" tab.
@@ -24,6 +24,29 @@ export function buildLedgerItems(expenses, settlements) {
   }))
 
   return [...expenseItems, ...paymentItems]
+}
+
+// Filters ledger items by a free-text query matched against date, title, amount, and currency.
+export function filterLedgerItems(items, query) {
+  const trimmed = query.trim().toLowerCase()
+  if (!trimmed) {
+    return items
+  }
+
+  return items.filter((item) => {
+    const title = item.kind === 'expense' ? item.expense.current_version.title : 'Settlement'
+    const haystack = [
+      title,
+      item.date,
+      formatExpenseDate(item.date),
+      formatMonthLabel(item.date),
+      item.amount,
+      item.currency,
+    ]
+      .join(' ')
+      .toLowerCase()
+    return haystack.includes(trimmed)
+  })
 }
 
 function toCents(decimalString) {
