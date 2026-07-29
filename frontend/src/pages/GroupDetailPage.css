@@ -58,6 +58,21 @@
   font-size: 1.4rem;
 }
 
+.group-detail-title-btn {
+  display: block;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  font-weight: 700;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
 .group-detail-description {
   margin: 0.3rem 0 0;
   color: var(--ink-soft);
