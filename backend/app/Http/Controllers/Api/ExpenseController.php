@@ -130,13 +130,13 @@ class ExpenseController extends Controller
 
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'amount' => ['required', 'numeric', 'min:0.01'],
-            'currency' => ['required', 'string', 'size:3'],
+            'amount' => ['required', 'numeric', 'min:0.01', 'regex:/^\d+(\.\d{1,2})?$/'],
+            'currency' => ['required', 'string', 'size:3', 'regex:/^[A-Za-z]{3}$/'],
             'date' => ['required', 'date'],
             'paid_by' => ['nullable', 'integer', 'in:'.$activeMemberIds->implode(',')],
             'shares' => ['required', 'array', 'min:1'],
             'shares.*.user_id' => ['required', 'integer', 'in:'.$activeMemberIds->implode(',')],
-            'shares.*.amount' => ['required', 'numeric', 'min:0'],
+            'shares.*.amount' => ['required', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,2})?$/'],
         ]);
 
         $shareTotal = collect($data['shares'])->reduce(

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useNavigate, useParams, Navigate } from 'react-router'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   useGetGroupQuery,
@@ -26,7 +26,7 @@ export default function SettlementFormPage() {
   const isOnline = useOnlineStatus()
   const isEditing = Boolean(settlementId)
 
-  const { data: group } = useGetGroupQuery(groupId)
+  const { data: group, error: groupError } = useGetGroupQuery(groupId)
   const { data: settlement } = useGetSettlementQuery({ groupId, settlementId }, { skip: !isEditing })
   const [createSettlement, { isLoading: isCreating, error: createError }] = useCreateSettlementMutation()
   const [updateSettlement, { isLoading: isUpdating, error: updateError }] = useUpdateSettlementMutation()
@@ -56,6 +56,10 @@ export default function SettlementFormPage() {
       setToUserId(settlement.to_user.id)
     }
   }, [settlement])
+
+  if (groupError?.status === 403 || groupError?.status === 404) {
+    return <Navigate to="/groups" replace />
+  }
 
   if (!group) {
     return isOnline ? null : (
@@ -146,7 +150,9 @@ export default function SettlementFormPage() {
             Currency
             <input
               value={currency}
-              onChange={(event) => setCurrency(event.target.value.toUpperCase())}
+              onChange={(event) => setCurrency(event.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase())}
+              pattern="[A-Za-z]{3}"
+              title="3-letter currency code, e.g. EUR"
               maxLength={3}
               required
               className="expense-form-input expense-form-input--currency amount"

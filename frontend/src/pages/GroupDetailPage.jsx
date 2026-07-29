@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router'
+import { useParams, useNavigate, Navigate } from 'react-router'
 import { useSelector } from 'react-redux'
 import { useGetGroupQuery, useLeaveGroupMutation } from '../api/groupsApi'
 import { selectCurrentUser } from '../features/auth/authSlice'
@@ -27,11 +27,15 @@ export default function GroupDetailPage() {
   const currentUser = useSelector(selectCurrentUser)
   const isOnline = useOnlineStatus()
 
-  const { data: group } = useGetGroupQuery(groupId)
+  const { data: group, error: groupError } = useGetGroupQuery(groupId)
   const [leaveGroup, { isLoading: isLeaving, error: leaveError }] = useLeaveGroupMutation()
 
   const [activeTab, setActiveTab] = useState(null)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
+
+  if (groupError?.status === 403 || groupError?.status === 404) {
+    return <Navigate to="/groups" replace />
+  }
 
   if (!group) {
     return isOnline ? null : (

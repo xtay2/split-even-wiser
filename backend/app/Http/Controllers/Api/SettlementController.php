@@ -106,8 +106,8 @@ class SettlementController extends Controller
 
         $data = $request->validate([
             'to_user_id' => ['required', 'integer', 'in:'.$activeMemberIds->implode(',')],
-            'amount' => ['required', 'numeric', 'min:0.01'],
-            'currency' => ['required', 'string', 'size:3'],
+            'amount' => ['required', 'numeric', 'min:0.01', 'regex:/^\d+(\.\d{1,2})?$/'],
+            'currency' => ['required', 'string', 'size:3', 'regex:/^[A-Za-z]{3}$/'],
             'date' => ['required', 'date'],
             'client_uuid' => ['nullable', 'uuid'],
         ]);

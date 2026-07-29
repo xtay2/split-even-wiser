@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router'
+import { useNavigate, useParams, useSearchParams, Navigate } from 'react-router'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   useGetGroupQuery,
@@ -58,7 +58,7 @@ export default function ExpenseFormPage() {
   const isOnline = useOnlineStatus()
   const isEditing = Boolean(expenseId)
 
-  const { data: group } = useGetGroupQuery(groupId)
+  const { data: group, error: groupError } = useGetGroupQuery(groupId)
   const { data: expense } = useGetExpenseQuery({ groupId, expenseId }, { skip: !isEditing })
   const [createExpense, { isLoading: isCreating, error: createError }] = useCreateExpenseMutation()
   const [updateExpense, { isLoading: isUpdating, error: updateError }] = useUpdateExpenseMutation()
@@ -112,6 +112,10 @@ export default function ExpenseFormPage() {
     const target = focusField ? refs[focusField] : (!isEditing ? titleInputRef : null)
     target?.current?.focus()
   }, [group, expense, isEditing, focusField])
+
+  if (groupError?.status === 403 || groupError?.status === 404) {
+    return <Navigate to="/groups" replace />
+  }
 
   if (!group) {
     return isOnline ? null : (
@@ -262,7 +266,9 @@ export default function ExpenseFormPage() {
             Currency
             <input
               value={currency}
-              onChange={(event) => setCurrency(event.target.value.toUpperCase())}
+              onChange={(event) => setCurrency(event.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase())}
+              pattern="[A-Za-z]{3}"
+              title="3-letter currency code, e.g. EUR"
               maxLength={3}
               required
               className="expense-form-input expense-form-input--currency amount"
