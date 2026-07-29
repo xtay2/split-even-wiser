@@ -1,0 +1,16 @@
+.group-edit-textarea {
+  resize: vertical;
+  max-height: 9rem;
+  overflow-y: auto;
+  font-family: var(--font-body);
+}
+
+.group-edit-cancel {
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: none;
+  color: var(--ink-soft);
+  font-weight: 600;
+  cursor: pointer;
+}

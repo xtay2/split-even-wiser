@@ -66,7 +66,14 @@ export default function GroupDetailPage() {
       <header className="group-detail-header">
         <div className="group-detail-header__row">
           <div className="group-detail-header__text">
-            <h1 className="group-detail-title">{group.name}</h1>
+            <button
+              type="button"
+              className="group-detail-title group-detail-title-btn"
+              onClick={() => navigate(`/groups/${groupId}/edit`)}
+              title="Edit group"
+            >
+              {group.name}
+            </button>
             {group.description && <p className="group-detail-description">{group.description}</p>}
           </div>
           <button
