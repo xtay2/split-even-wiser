@@ -10,10 +10,10 @@ export const authApi = apiSlice.injectEndpoints({
       }),
     }),
     verifyLoginToken: builder.mutation({
-      query: ({ email, token, username }) => ({
+      query: ({ email, token, code, username }) => ({
         url: '/auth/verify',
         method: 'POST',
-        body: { email, token, username },
+        body: { email, token, code, username },
       }),
     }),
     logout: builder.mutation({

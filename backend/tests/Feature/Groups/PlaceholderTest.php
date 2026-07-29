@@ -163,7 +163,7 @@ it('logs into a placeholder directly via the magic link and claims it in place',
         ->assertCreated();
     $placeholder = User::where('email', 'eve@example.com')->first();
 
-    $token = LoginToken::issueFor('eve@example.com');
+    ['token' => $token] = LoginToken::issueFor('eve@example.com');
     $response = $this->postJson('/api/auth/verify', ['email' => 'eve@example.com', 'token' => $token]);
 
     $response->assertOk()->assertJsonPath('user.id', $placeholder->id);

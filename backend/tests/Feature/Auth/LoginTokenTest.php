@@ -3,6 +3,7 @@
 use App\Mail\LoginTokenMail;
 use App\Models\LoginToken;
 use App\Models\User;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Mail;
 
 it('sends a login token email and creates a token record for a new email', function () {
@@ -16,7 +17,7 @@ it('sends a login token email and creates a token record for a new email', funct
 });
 
 it('requires a username to create an account for a first-time email', function () {
-    $token = LoginToken::issueFor('newperson@example.com');
+    ['token' => $token] = LoginToken::issueFor('newperson@example.com');
 
     $response = $this->postJson('/api/auth/verify', [
         'email' => 'newperson@example.com',
@@ -28,7 +29,7 @@ it('requires a username to create an account for a first-time email', function (
 });
 
 it('creates an account and issues an api token when verifying with a username', function () {
-    $token = LoginToken::issueFor('newperson@example.com');
+    ['token' => $token] = LoginToken::issueFor('newperson@example.com');
 
     $response = $this->postJson('/api/auth/verify', [
         'email' => 'newperson@example.com',
@@ -46,11 +47,24 @@ it('creates an account and issues an api token when verifying with a username', 
 
 it('logs in an existing user without requiring a username', function () {
     $user = User::factory()->create(['email' => 'returning@example.com']);
-    $token = LoginToken::issueFor('returning@example.com');
+    ['token' => $token] = LoginToken::issueFor('returning@example.com');
 
     $response = $this->postJson('/api/auth/verify', [
         'email' => 'returning@example.com',
         'token' => $token,
+    ]);
+
+    $response->assertOk()->assertJsonPath('user.id', $user->id);
+});
+
+it('logs in an existing user with the emailed code instead of the link', function () {
+    $this->withoutMiddleware(ThrottleRequests::class);
+    $user = User::factory()->create(['email' => 'returning@example.com']);
+    ['code' => $code] = LoginToken::issueFor('returning@example.com');
+
+    $response = $this->postJson('/api/auth/verify', [
+        'email' => 'returning@example.com',
+        'code' => $code,
     ]);
 
     $response->assertOk()->assertJsonPath('user.id', $user->id);
@@ -65,8 +79,20 @@ it('rejects an invalid token', function () {
     $response->assertUnprocessable()->assertJsonValidationErrors('token');
 });
 
+it('rejects an invalid code', function () {
+    $this->withoutMiddleware(ThrottleRequests::class);
+    LoginToken::issueFor('nobody@example.com');
+
+    $response = $this->postJson('/api/auth/verify', [
+        'email' => 'nobody@example.com',
+        'code' => '000000',
+    ]);
+
+    $response->assertUnprocessable()->assertJsonValidationErrors('token');
+});
+
 it('rejects a token that has already been consumed', function () {
-    $token = LoginToken::issueFor('reuse@example.com');
+    ['token' => $token] = LoginToken::issueFor('reuse@example.com');
 
     $this->postJson('/api/auth/verify', [
         'email' => 'reuse@example.com',
@@ -78,6 +104,24 @@ it('rejects a token that has already been consumed', function () {
         'email' => 'reuse@example.com',
         'token' => $token,
         'username' => 'differentuser',
+    ]);
+
+    $response->assertUnprocessable()->assertJsonValidationErrors('token');
+});
+
+it('rejects a code once its token has been consumed via the link', function () {
+    $this->withoutMiddleware(ThrottleRequests::class);
+    ['token' => $token, 'code' => $code] = LoginToken::issueFor('reuse2@example.com');
+
+    $this->postJson('/api/auth/verify', [
+        'email' => 'reuse2@example.com',
+        'token' => $token,
+        'username' => 'reuseuser2',
+    ])->assertOk();
+
+    $response = $this->postJson('/api/auth/verify', [
+        'email' => 'reuse2@example.com',
+        'code' => $code,
     ]);
 
     $response->assertUnprocessable()->assertJsonValidationErrors('token');

@@ -16,6 +16,7 @@ class LoginTokenMail extends Mailable implements ShouldQueue
     public function __construct(
         public readonly string $email,
         public readonly string $token,
+        public readonly string $code,
     ) {}
 
     public function envelope(): Envelope
@@ -36,6 +37,7 @@ class LoginTokenMail extends Mailable implements ShouldQueue
                     urlencode($this->token),
                     urlencode($this->email),
                 ),
+                'code' => $this->code,
             ],
         );
     }

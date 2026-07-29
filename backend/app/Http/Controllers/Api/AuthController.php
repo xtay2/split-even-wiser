@@ -19,9 +19,9 @@ class AuthController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        $token = LoginToken::issueFor($data['email']);
+        ['token' => $token, 'code' => $code] = LoginToken::issueFor($data['email']);
 
-        Mail::to($data['email'])->send(new LoginTokenMail($data['email'], $token));
+        Mail::to($data['email'])->send(new LoginTokenMail($data['email'], $token, $code));
 
         return response()->json([
             'message' => 'If that email is valid, a login link has been sent.',
@@ -32,15 +32,18 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'email' => ['required', 'email'],
-            'token' => ['required', 'string'],
+            'token' => ['required_without:code', 'nullable', 'string'],
+            'code' => ['required_without:token', 'nullable', 'string', 'size:6'],
             'username' => ['nullable', 'string', 'min:3', 'max:30', 'regex:/^[a-zA-Z0-9_.]+$/', 'unique:users,username'],
         ]);
 
-        $loginToken = LoginToken::findValid($data['email'], $data['token']);
+        $loginToken = ! empty($data['token'])
+            ? LoginToken::findValid($data['email'], $data['token'])
+            : LoginToken::findValidByCode($data['email'], $data['code']);
 
         if (! $loginToken) {
             throw ValidationException::withMessages([
-                'token' => 'This login link is invalid or has expired.',
+                'token' => 'This login link or code is invalid or has expired.',
             ]);
         }
 

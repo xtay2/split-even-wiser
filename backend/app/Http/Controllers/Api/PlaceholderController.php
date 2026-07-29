@@ -53,7 +53,7 @@ class PlaceholderController extends Controller
 
         if (! empty($data['email'])) {
             $inviter = $request->user();
-            $token = LoginToken::issueFor($data['email'], self::INVITE_TOKEN_TTL_MINUTES);
+            ['token' => $token] = LoginToken::issueFor($data['email'], self::INVITE_TOKEN_TTL_MINUTES);
 
             Mail::to($data['email'])->send(new GroupInviteMail(
                 $data['email'],
