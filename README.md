@@ -12,15 +12,13 @@ debt simplification.
 
 ## First-time setup
 
-```
-cp backend/.env.example backend/.env
-docker compose up -d --build
-docker compose exec app php artisan webpush:vapid
+```bash
+scripts/setup.sh
 ```
 
-The last step generates a VAPID keypair into `backend/.env` - required before push
-notifications will work (friend requests use them). Restart `app`/`queue` after generating it
-(`docker compose restart app queue`).
+This copies `backend/.env.example` to `backend/.env`, builds and starts the containers, and
+generates a VAPID keypair into `backend/.env` - required before push notifications will work
+(friend requests use them).
 
 `backend/.env` is gitignored on purpose (it ends up holding the VAPID private key); everything
 else in it is safe local-dev defaults out of the box.
@@ -50,8 +48,8 @@ container runs `npm install && npm run dev` on boot. Both are safe to restart fr
 
 ### Tests
 
-```
-docker compose exec app ./vendor/bin/pest
+```bash
+scripts/test.sh
 ```
 
 ## Deploying to production
@@ -69,8 +67,8 @@ git pull
 
 ### Backend changes (Laravel API)
 
-```
-docker compose -f docker-compose.yml -f docker-compose.prod.yml restart app queue
+```bash
+scripts/deploy-backend.sh
 ```
 
 `backend/` is bind-mounted into `app`/`queue`, so PHP source changes are visible immediately -
@@ -78,17 +76,16 @@ restarting re-runs `docker/php/entrypoint.sh`, which applies pending migrations
 (`php artisan migrate --force`) and re-symlinks `public/storage`. The restart mainly matters so
 the long-lived `queue:work` process picks up the new code and so migrations actually run.
 
-If `composer.json`/`composer.lock` changed, install first (the entrypoint only runs
+If `composer.json`/`composer.lock` changed, pass `--install` (the entrypoint only runs
 `composer install` when `vendor/` is missing, which it won't be after the first deploy):
-```
-docker compose -f docker-compose.yml -f docker-compose.prod.yml exec app composer install --no-interaction --prefer-dist
-docker compose -f docker-compose.yml -f docker-compose.prod.yml restart app queue
+```bash
+scripts/deploy-backend.sh --install
 ```
 
-If `docker/php/Dockerfile` changed (new PHP extensions/system packages), rebuild the image
-instead of just restarting:
-```
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build app queue
+If `docker/php/Dockerfile` changed (new PHP extensions/system packages), pass `--build` to
+rebuild the image instead of just restarting:
+```bash
+scripts/deploy-backend.sh --build
 ```
 
 ### Frontend changes (React SPA)
@@ -96,8 +93,8 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build ap
 The SPA is a static build baked into a shared volume that nginx serves from `/var/www/frontend`;
 it does not rebuild automatically on `up`:
 
-```
-docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm frontend-build
+```bash
+scripts/deploy-frontend.sh
 ```
 
 This runs `npm ci && npm run build` against `VITE_API_URL=https://split-even-wiser.com/api` and
@@ -108,25 +105,14 @@ writes straight into the volume nginx reads from - no restart needed afterwards.
 Plain static HTML/CSS/JS in `landing/`, no build step - nginx serves it straight from a
 bind mount, so a change just needs nginx to pick up the new files:
 
-```
-docker compose -f docker-compose.yml -f docker-compose.prod.yml restart nginx
-```
-
-**One-time setup on an existing production host** (not needed for a fresh
-`init-letsencrypt.sh` bootstrap, which already requests both names): the DNS A record for
-`www.split-even-wiser.com` must point at the server, then expand the existing certificate to
-cover it as a SAN:
-
-```
-docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm --entrypoint sh certbot -c \
-  "certbot certonly --webroot -w /var/www/certbot -d split-even-wiser.com -d www.split-even-wiser.com --expand --email dennis_woithe@web.de --agree-tos --no-eff-email"
-docker compose -f docker-compose.yml -f docker-compose.prod.yml exec nginx nginx -s reload
+```bash
+scripts/deploy-landing.sh
 ```
 
 ### After deploying
 
-```
-docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f app queue nginx
+```bash
+scripts/deploy-logs.sh
 ```
 
 `mailserver` and `certbot` only need touching when their own config changes - see
@@ -139,4 +125,5 @@ backend/     Laravel 12 API
 frontend/    React 19 + Vite PWA
 landing/     Static English marketing page, served on www.split-even-wiser.com
 docker/      Dockerfiles, nginx config, mailserver config
+scripts/     Setup, test, and deploy scripts referenced throughout this README
 ```

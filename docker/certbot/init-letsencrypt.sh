@@ -10,8 +10,9 @@ set -euo pipefail
 
 DOMAIN="split-even-wiser.com"
 MAIL_DOMAIN="mail.split-even-wiser.com"
-EMAIL="dennis_woithe@web.de"
 COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
+
+read -rp "Email for Let's Encrypt notifications: " EMAIL
 
 echo "==> Building frontend and creating a temporary self-signed cert"
 $COMPOSE run --rm frontend-build
