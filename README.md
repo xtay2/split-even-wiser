@@ -109,15 +109,6 @@ bind mount, so a change just needs nginx to pick up the new files:
 scripts/deploy-landing.sh
 ```
 
-**One-time setup on an existing production host** (not needed for a fresh
-`init-letsencrypt.sh` bootstrap, which already requests both names): the DNS A record for
-`www.split-even-wiser.com` must point at the server, then expand the existing certificate to
-cover it as a SAN (prompts for the Let's Encrypt notification email):
-
-```bash
-scripts/expand-cert-www.sh
-```
-
 ### After deploying
 
 ```bash
