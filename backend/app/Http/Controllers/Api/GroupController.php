@@ -111,6 +111,10 @@ class GroupController extends Controller
 
         $membership->update(['left_at' => now()]);
 
+        if ($group->groupMembers()->whereNull('left_at')->doesntExist()) {
+            $group->delete();
+        }
+
         return response()->json(status: 204);
     }
 

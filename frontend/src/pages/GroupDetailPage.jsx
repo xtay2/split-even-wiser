@@ -45,6 +45,7 @@ export default function GroupDetailPage() {
   // Nobody to split with yet - land on Members instead of an empty Payments tab, until
   // the person picks a tab themselves.
   const hasOtherMembers = group.members.length > 1
+  const isLastMember = group.members.length === 1
   const effectiveTab = activeTab ?? (hasOtherMembers ? 'payments' : 'members')
 
   async function handleLeave() {
@@ -88,7 +89,11 @@ export default function GroupDetailPage() {
       <ConfirmDialog
         open={showLeaveConfirm}
         title="Leave group?"
-        message={`You'll lose access to "${group.name}" until someone adds you back.`}
+        message={
+          isLastMember
+            ? `You're the last member of "${group.name}". Leaving will permanently delete this group and its entire history.`
+            : `You'll lose access to "${group.name}" until someone adds you back.`
+        }
         confirmLabel="Leave group"
         danger
         isConfirming={isLeaving}

@@ -253,3 +253,22 @@ it('lets a member with no expenses leave immediately', function () {
     $this->actingAs($bob)->deleteJson("/api/groups/{$group->id}/members/{$bob->id}")
         ->assertNoContent();
 });
+
+it('deletes the group and its history when the last member leaves', function () {
+    $alice = User::factory()->create();
+    $group = groupWithMembers($alice);
+
+    $expense = Expense::create(['group_id' => $group->id, 'created_by' => $alice->id]);
+    $v1 = $expense->versions()->create([
+        'version_no' => 1, 'title' => 'Snacks', 'amount' => 5, 'currency' => 'EUR', 'date' => '2026-07-10',
+        'paid_by' => $alice->id, 'created_by' => $alice->id,
+    ]);
+    $v1->shares()->create(['user_id' => $alice->id, 'share_amount' => 5]);
+    $expense->update(['current_version_id' => $v1->id]);
+
+    $this->actingAs($alice)->deleteJson("/api/groups/{$group->id}/members/{$alice->id}")
+        ->assertNoContent();
+
+    expect(Group::find($group->id))->toBeNull();
+    expect(Expense::withTrashed()->where('group_id', $group->id)->exists())->toBeFalse();
+});
