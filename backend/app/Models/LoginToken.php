@@ -30,7 +30,7 @@ class LoginToken extends Model
      * numeric companion code. Only hashes are persisted. Regular login links are short-lived
      * (15 minutes); callers that send a link someone might not open right away (e.g. a group
      * invite email) can pass a longer TTL. The code lets a user log in by typing digits instead
-     * of following the link — needed on iOS, where tapping a Mail link always opens Safari
+     * of following the link - needed on iOS, where tapping a Mail link always opens Safari
      * rather than an installed home-screen PWA, so the link is often useless there.
      *
      * @return array{token: string, code: string}

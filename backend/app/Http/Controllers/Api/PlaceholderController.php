@@ -62,7 +62,7 @@ class PlaceholderController extends Controller
                 $group->name,
             ));
 
-            // Auto-accepted, no FriendRequestReceived push — the placeholder didn't choose
+            // Auto-accepted, no FriendRequestReceived push - the placeholder didn't choose
             // this, it's a byproduct of being invited, not a request they need to act on.
             Friendship::create([
                 'requester_id' => $inviter->id,

@@ -32,6 +32,7 @@ docker compose up -d
 ```
 
 - Frontend (PWA): http://localhost:5173
+- Landing page (marketing site, production: www.split-even-wiser.com): http://localhost:8080
 - Backend API: http://localhost:8000/api
 - Sent mail (Mailhog UI - login links land here in dev): http://localhost:8026
 - Postgres: localhost:5433 (off the default 5432 to avoid clashing with a host-local Postgres)
@@ -102,6 +103,26 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm fronten
 This runs `npm ci && npm run build` against `VITE_API_URL=https://split-even-wiser.com/api` and
 writes straight into the volume nginx reads from - no restart needed afterwards.
 
+### Landing page (www.split-even-wiser.com)
+
+Plain static HTML/CSS/JS in `landing/`, no build step - nginx serves it straight from a
+bind mount, so a change just needs nginx to pick up the new files:
+
+```
+docker compose -f docker-compose.yml -f docker-compose.prod.yml restart nginx
+```
+
+**One-time setup on an existing production host** (not needed for a fresh
+`init-letsencrypt.sh` bootstrap, which already requests both names): the DNS A record for
+`www.split-even-wiser.com` must point at the server, then expand the existing certificate to
+cover it as a SAN:
+
+```
+docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm --entrypoint sh certbot -c \
+  "certbot certonly --webroot -w /var/www/certbot -d split-even-wiser.com -d www.split-even-wiser.com --expand --email dennis_woithe@web.de --agree-tos --no-eff-email"
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec nginx nginx -s reload
+```
+
 ### After deploying
 
 ```
@@ -116,5 +137,6 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f app queu
 ```
 backend/     Laravel 12 API
 frontend/    React 19 + Vite PWA
+landing/     Static English marketing page, served on www.split-even-wiser.com
 docker/      Dockerfiles, nginx config, mailserver config
 ```

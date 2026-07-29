@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Folds a placeholder User's group memberships, expenses, settlements, and friendships into
  * a real account the placeholder has been identified as ("That's me"), then deletes the
- * now-empty placeholder row. Used when the claimant already has their own separate account —
+ * now-empty placeholder row. Used when the claimant already has their own separate account -
  * the alternative path (clicking the invite email's magic login link) logs straight into the
  * placeholder row itself and needs no merge, see AuthController::verify.
  */
@@ -30,7 +30,7 @@ class PlaceholderMerger
             $placeholder = User::whereKey($placeholder->id)->lockForUpdate()->firstOrFail();
 
             // Captured before mergeGroupMemberships() mutates these rows, so every group the
-            // placeholder belonged to gets a history entry — not just the one the claim was
+            // placeholder belonged to gets a history entry - not just the one the claim was
             // made from.
             $groupIds = GroupMember::where('user_id', $placeholder->id)->pluck('group_id')->unique();
 
@@ -58,7 +58,7 @@ class PlaceholderMerger
                 ->exists();
 
             if ($claimantIsActiveHere) {
-                // Claimant is already an active member of this group — just close out the
+                // Claimant is already an active member of this group - just close out the
                 // placeholder's row rather than creating a second membership for the same person.
                 $membership->update(['left_at' => $membership->left_at ?? now()]);
             } else {
@@ -100,7 +100,7 @@ class PlaceholderMerger
         Settlement::withTrashed()->where('created_by', $placeholder->id)->update(['created_by' => $claimant->id]);
 
         // A settlement that was between just the placeholder and the claimant is now a
-        // self-settlement — moot, so retire it the same way SettlementController::destroy does.
+        // self-settlement - moot, so retire it the same way SettlementController::destroy does.
         Settlement::withTrashed()
             ->where('from_user_id', $claimant->id)
             ->whereColumn('from_user_id', 'to_user_id')
@@ -118,7 +118,7 @@ class PlaceholderMerger
                 $addresseeId = $friendship->addressee_id === $placeholder->id ? $claimant->id : $friendship->addressee_id;
 
                 // Claiming a placeholder you yourself invited turns the auto-friendship into a
-                // self-friendship — drop it. Same if the claimant already has an unrelated
+                // self-friendship - drop it. Same if the claimant already has an unrelated
                 // friendship row with the other side (UNIQUE(requester_id, addressee_id)).
                 if ($requesterId === $addresseeId) {
                     $friendship->delete();

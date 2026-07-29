@@ -29,9 +29,11 @@ echo "==> Starting nginx with the temporary cert"
 $COMPOSE up -d postgres redis app queue nginx
 
 echo "==> Requesting the real certificate from Let's Encrypt"
+# www.$DOMAIN is a SAN on this same cert (it's served by its own nginx server block,
+# but sharing the apex cert avoids provisioning + renewing a second one).
 $COMPOSE run --rm --entrypoint sh certbot -c "
   rm -rf /etc/letsencrypt/live/$DOMAIN /etc/letsencrypt/archive/$DOMAIN /etc/letsencrypt/renewal/$DOMAIN.conf &&
-  certbot certonly --webroot -w /var/www/certbot -d $DOMAIN \
+  certbot certonly --webroot -w /var/www/certbot -d $DOMAIN -d www.$DOMAIN \
     --email $EMAIL --agree-tos --no-eff-email
 "
 

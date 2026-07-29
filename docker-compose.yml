@@ -78,6 +78,16 @@ services:
     environment:
       VITE_API_URL: http://localhost:8000/api
 
+  # Static marketing page (production: www.split-even-wiser.com). No build step, so dev
+  # just serves the same landing/ directory nginx serves in prod - edit and refresh.
+  landing:
+    image: nginx:alpine
+    restart: unless-stopped
+    volumes:
+      - ./landing:/usr/share/nginx/html:ro
+    ports:
+      - "8080:80"
+
   mailhog:
     image: mailhog/mailhog:latest
     restart: unless-stopped
