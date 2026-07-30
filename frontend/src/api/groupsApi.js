@@ -41,6 +41,20 @@ export const groupsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result, error, { groupId }) => [{ type: 'Group', id: groupId }],
     }),
+    createInviteLink: builder.mutation({
+      query: ({ groupId, expiresIn }) => ({
+        url: `/groups/${groupId}/invite-link`,
+        method: 'POST',
+        body: { expires_in: expiresIn },
+      }),
+    }),
+    getInvitePreview: builder.query({
+      query: (token) => `/invite-links/${token}`,
+    }),
+    acceptInvite: builder.mutation({
+      query: (token) => ({ url: `/invite-links/${token}/accept`, method: 'POST' }),
+      invalidatesTags: ['Groups'],
+    }),
     claimPlaceholder: builder.mutation({
       query: ({ groupId, userId }) => ({
         url: `/groups/${groupId}/placeholders/${userId}/claim`,
@@ -169,6 +183,9 @@ export const {
   useAddGroupMemberMutation,
   useAddPlaceholderMemberMutation,
   useClaimPlaceholderMutation,
+  useCreateInviteLinkMutation,
+  useGetInvitePreviewQuery,
+  useAcceptInviteMutation,
   useLeaveGroupMutation,
   useGetBalancesQuery,
   useGetActivityQuery,

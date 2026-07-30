@@ -57,4 +57,9 @@ class Group extends Model
     {
         return $this->hasMany(PlaceholderClaim::class);
     }
+
+    public function invites(): HasMany
+    {
+        return $this->hasMany(GroupInvite::class);
+    }
 }

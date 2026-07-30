@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\FriendshipController;
 use App\Http\Controllers\Api\GroupController;
+use App\Http\Controllers\Api\GroupInviteController;
 use App\Http\Controllers\Api\PlaceholderController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\PushSubscriptionController;
@@ -14,6 +15,8 @@ Route::post('/auth/request-token', [AuthController::class, 'requestToken'])
     ->middleware('throttle:6,1');
 Route::post('/auth/verify', [AuthController::class, 'verify'])
     ->middleware('throttle:10,1');
+
+Route::get('/invite-links/{token}', [GroupInviteController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
@@ -44,6 +47,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/groups/{group}/members/{user}', [GroupController::class, 'leave']);
     Route::post('/groups/{group}/placeholders', [PlaceholderController::class, 'store']);
     Route::post('/groups/{group}/placeholders/{user}/claim', [PlaceholderController::class, 'claim']);
+    Route::post('/groups/{group}/invite-link', [GroupInviteController::class, 'store']);
+    Route::post('/invite-links/{token}/accept', [GroupInviteController::class, 'accept']);
     Route::get('/groups/{group}/balances', [GroupController::class, 'balances']);
     Route::get('/groups/{group}/activity', [GroupController::class, 'activity']);
 

@@ -2,13 +2,16 @@ import {useEffect, useRef, useState} from 'react'
 import { useAddGroupMemberMutation } from '../api/groupsApi'
 import { useGetFriendsQuery } from '../api/friendsApi'
 import { GroupAddIcon } from './icons/GroupAddIcon'
+import { LinkIcon } from './icons/LinkIcon.tsx'
 import { personName } from '../utils/personName'
 import ClaimPlaceholderDialog from './ClaimPlaceholderDialog'
+import GroupInviteLinkDialog from './GroupInviteLinkDialog'
 
 export default function GroupMembersTab({ hidden, groupId, group, currentUser, isOnline }) {
   const { data: friends = [] } = useGetFriendsQuery()
   const [addMember, { isLoading: isAdding, error: addError }] = useAddGroupMemberMutation()
   const [claimingMember, setClaimingMember] = useState(null)
+  const [showInviteLink, setShowInviteLink] = useState(false)
   const memberInputRef = useRef(null);
   const [memberIdentifier, setMemberIdentifier] = useState('')
   const [showAddMember, setShowAddMember] = useState(false)
@@ -124,7 +127,23 @@ export default function GroupMembersTab({ hidden, groupId, group, currentUser, i
         onClose={() => setClaimingMember(null)}
       />
 
+      <GroupInviteLinkDialog
+        open={showInviteLink}
+        groupId={groupId}
+        groupName={group.name}
+        onClose={() => setShowInviteLink(false)}
+      />
+
       <div className="group-fab-column">
+        <button
+          type="button"
+          className="group-fab group-fab--right"
+          onClick={() => setShowInviteLink(true)}
+          disabled={!isOnline}
+        >
+          <LinkIcon fontSizePx={20} />
+          Invitation Link
+        </button>
         <button
           type="button"
           className="group-fab group-fab--right"

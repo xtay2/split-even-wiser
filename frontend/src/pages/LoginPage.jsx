@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router'
 import { useDispatch } from 'react-redux'
 import { useRequestLoginTokenMutation, useVerifyLoginTokenMutation } from '../api/authApi'
 import { credentialsReceived } from '../features/auth/authSlice'
+import { consumePendingInvite } from '../utils/pendingInvite'
 import './LoginPage.css'
 
 export default function LoginPage() {
@@ -28,7 +29,8 @@ export default function LoginPage() {
     try {
       const result = await verify({ email, code, username: needsUsername ? username : undefined }).unwrap()
       dispatch(credentialsReceived(result))
-      navigate('/groups', { replace: true })
+      const pendingInvite = consumePendingInvite()
+      navigate(pendingInvite ? `/invite/${pendingInvite}` : '/groups', { replace: true })
     } catch (err) {
       if (err.data?.errors?.username) {
         setNeedsUsername(true)

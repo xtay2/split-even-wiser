@@ -1,0 +1,56 @@
+.invite-link-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.75rem;
+}
+
+.invite-link-select,
+.invite-link-input {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 400;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.invite-link-input {
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+.invite-link-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.invite-link-copy-btn,
+.invite-link-share-btn {
+  flex: 1;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.invite-link-copy-btn:disabled,
+.invite-link-share-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.invite-link-copy-btn--copied {
+  background: var(--ledger-green-soft);
+  border-color: var(--ledger-green);
+  color: var(--ledger-green);
+}
