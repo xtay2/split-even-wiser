@@ -5,9 +5,6 @@
   --ink-soft: #5c6b62;
   --line: #ded4c1;
   --ledger-green: #1f6f4a;
-  --ledger-green-soft: #e4f0e9;
-  --owed-red: #a83a2e;
-  --owed-red-soft: #f6e6e3;
   --stamp-gold: #c9932f;
   --stamp-gold-soft: #f6ecd8;
 
@@ -309,125 +306,15 @@ a {
 }
 
 .phone__screen {
-  background: var(--paper);
   border-radius: 22px;
-  padding: 16px 14px;
-  min-height: 340px;
+  overflow: hidden;
+  line-height: 0;
 }
 
-.mock-topbar {
-  font-weight: 700;
-  font-size: 1rem;
-  margin-bottom: 14px;
-  color: var(--ink);
-}
-
-.mock-card {
-  background: var(--paper-raised);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 10px;
-}
-
-.mock-card__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.mock-card__title {
-  font-weight: 600;
-  font-size: 0.88rem;
-  color: var(--ink);
-}
-
-.mock-card__sub {
+.phone__screen img {
   display: block;
-  font-size: 0.72rem;
-  color: var(--ink-soft);
-  margin-top: 4px;
-}
-
-.mock-amount {
-  font-family: var(--font-mono);
-  font-weight: 600;
-  font-size: 0.85rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-}
-
-.mock-amount--owed {
-  color: var(--owed-red);
-}
-
-.mock-amount--credit {
-  color: var(--ledger-green);
-}
-
-.mock-field {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 2px;
-  border-bottom: 1px solid var(--line);
-  font-size: 0.85rem;
-}
-
-.mock-field__label {
-  color: var(--ink-soft);
-}
-
-.mock-field__label--block {
-  display: block;
-  border-bottom: none;
-  padding: 12px 2px 6px;
-}
-
-.mock-field__value {
-  color: var(--ink);
-  font-weight: 600;
-}
-
-.mock-chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 16px;
-}
-
-.mock-chip {
-  font-size: 0.72rem;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: var(--paper-raised);
-  border: 1px solid var(--line);
-  color: var(--ink-soft);
-}
-
-.mock-chip--on {
-  background: var(--ledger-green-soft);
-  border-color: var(--ledger-green);
-  color: var(--ledger-green);
-  font-weight: 600;
-}
-
-.mock-button {
-  text-align: center;
-  background: var(--ledger-green);
-  color: #fff;
-  font-weight: 600;
-  font-size: 0.85rem;
-  padding: 10px;
-  border-radius: 8px;
-  margin-top: 4px;
-}
-
-.mock-button--ghost {
-  background: transparent;
-  color: var(--ledger-green);
-  border: 1px solid var(--ledger-green);
+  width: 100%;
+  height: auto;
 }
 
 /* Value grid */
