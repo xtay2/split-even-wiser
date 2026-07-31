@@ -122,8 +122,13 @@
   cursor: pointer;
 }
 
-.profile-imprint-link {
+.profile-footer {
   align-self: center;
+  display: flex;
+  gap: 1rem;
+}
+
+.profile-footer a {
   font-size: 0.8rem;
   color: var(--ink-soft);
   text-decoration: underline;

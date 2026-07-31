@@ -176,7 +176,10 @@ export default function ProfilePage() {
         Log out
       </button>
 
-      <Link to="/imprint" className="profile-imprint-link">Imprint</Link>
+      <div className="profile-footer">
+        <Link to="/pwa/install">How to Install</Link>
+        <Link to="/imprint">Imprint</Link>
+      </div>
 
       <EditFieldDialog
         open={usernameDialogOpen}

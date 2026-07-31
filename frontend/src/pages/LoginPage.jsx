@@ -127,7 +127,10 @@ export default function LoginPage() {
           </form>
         )}
 
-        <Link to="/imprint" className="login-imprint-link">Imprint</Link>
+        <div className="login-footer">
+          <Link to="/pwa/install">How to Install</Link>
+          <Link to="/imprint">Imprint</Link>
+        </div>
       </div>
     </div>
   )

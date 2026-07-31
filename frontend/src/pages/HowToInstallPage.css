@@ -1,0 +1,125 @@
+.install-screen {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--paper);
+}
+
+.install-card {
+  width: 100%;
+  max-width: 480px;
+}
+
+.install-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ledger-green);
+  margin: 0 0 0.6rem;
+}
+
+.install-title {
+  font-size: 1.85rem;
+  line-height: 1.15;
+  margin-bottom: 0.75rem;
+}
+
+.install-intro {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  margin: 0 0 1.5rem;
+}
+
+.install-selects {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.install-select-label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.install-select {
+  font-size: 0.95rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper-raised);
+  color: var(--ink);
+}
+
+.install-select:focus {
+  border-color: var(--ledger-green);
+}
+
+.install-steps {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.install-steps li {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.install-note {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.install-unsupported {
+  background: var(--owed-red-soft);
+  border-radius: 8px;
+  padding: 1.1rem;
+}
+
+.install-unsupported__title {
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.install-unsupported__reason {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  margin: 0 0 0.75rem;
+}
+
+.install-unsupported__alt {
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.install-alt-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--ledger-green);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.install-back-link {
+  display: inline-block;
+  margin-top: 1.75rem;
+  color: var(--ledger-green);
+  font-weight: 600;
+  text-decoration: underline;
+}

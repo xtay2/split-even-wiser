@@ -15,6 +15,7 @@ import SettlementFormPage from '../pages/SettlementFormPage.jsx'
 import NotFoundPage from '../pages/NotFoundPage'
 import ImprintPage from '../pages/ImprintPage'
 import GroupInvitePage from '../pages/GroupInvitePage'
+import HowToInstallPage from '../pages/HowToInstallPage'
 
 export const router = createBrowserRouter([
   {
@@ -32,6 +33,12 @@ export const router = createBrowserRouter([
   {
     path: '/imprint',
     element: <ImprintPage />,
+  },
+  {
+    path: '/pwa',
+    children: [
+      { path: 'install', element: <HowToInstallPage /> },
+    ],
   },
   {
     element: <RequireAuth />,
