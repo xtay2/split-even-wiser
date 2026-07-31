@@ -373,6 +373,12 @@ a {
   color: var(--ink);
 }
 
+@media (max-width: 640px) {
+  .site-nav a:not(.btn) {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
