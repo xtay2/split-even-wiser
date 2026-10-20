@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useGetGroupsQuery, useCreateGroupMutation } from '../api/groupsApi'
+import LoadingIndicator from '../components/LoadingIndicator'
 import { GroupIcon } from '../components/icons/GroupIcon.tsx'
 import './GroupsPage.css'
 
@@ -66,7 +67,7 @@ export default function GroupsPage() {
       )}
 
       {isLoading ? (
-        <p className="friends-empty">Loading…</p>
+        <LoadingIndicator label="Loading groups…" />
       ) : groups.length === 0 ? (
         <p className="friends-empty">No groups yet - create one to start splitting costs.</p>
       ) : (

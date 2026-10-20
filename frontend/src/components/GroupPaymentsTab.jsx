@@ -3,13 +3,14 @@ import { Link, useNavigate } from 'react-router'
 import { useGetExpensesQuery, useGetSettlementsQuery } from '../api/groupsApi'
 import { formatExpenseDate } from '../utils/expenseDate'
 import { buildLedgerItems, filterLedgerItems, groupItemsByMonth, getMyExpenseNet } from '../utils/groupLedger'
+import LoadingIndicator from './LoadingIndicator'
 import { PaymentsIcon } from './icons/PaymentsIcon.tsx'
 import { ReceiptLongIcon } from './icons/ReceiptLongIcon.tsx'
 
 export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor }) {
   const navigate = useNavigate()
-  const { data: expenses = [] } = useGetExpensesQuery(groupId)
-  const { data: settlements = [] } = useGetSettlementsQuery(groupId)
+  const { data: expenses = [], isLoading: expensesLoading } = useGetExpensesQuery(groupId)
+  const { data: settlements = [], isLoading: settlementsLoading } = useGetSettlementsQuery(groupId)
   const [searchQuery, setSearchQuery] = useState('')
 
   const items = buildLedgerItems(expenses, settlements)
@@ -29,7 +30,9 @@ export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor
           />
         </div>
       )}
-      {items.length === 0 ? (
+      {expensesLoading || settlementsLoading ? (
+        <LoadingIndicator label="Loading expenses…" />
+      ) : items.length === 0 ? (
         <p className="friends-empty">No expenses yet.</p>
       ) : filteredItems.length === 0 ? (
         <p className="friends-empty">No expenses or settlements match your search.</p>

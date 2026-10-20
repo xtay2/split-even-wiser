@@ -5,6 +5,7 @@ import { useGetGroupQuery, useLeaveGroupMutation } from '../api/groupsApi'
 import { selectCurrentUser } from '../features/auth/authSlice'
 import useOnlineStatus from '../features/offline/useOnlineStatus'
 import ConfirmDialog from '../components/ConfirmDialog'
+import LoadingIndicator from '../components/LoadingIndicator'
 import GroupPendingSyncBanner from '../components/GroupPendingSyncBanner'
 import GroupBalancesTab from '../components/GroupBalancesTab'
 import GroupPaymentsTab from '../components/GroupPaymentsTab'
@@ -39,7 +40,7 @@ export default function GroupDetailPage() {
   }
 
   if (!group) {
-    return isOnline ? null : (
+    return isOnline ? <LoadingIndicator label="Loading group…" /> : (
       <p className="friends-empty">This group isn't available offline yet. Open it once while online to use it here.</p>
     )
   }
