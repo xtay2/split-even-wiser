@@ -55,9 +55,13 @@ const GUIDES = {
     ],
   },
   'desktop:firefox': {
-    supported: false,
-    note: 'Firefox for desktop removed built-in support for installing web apps as standalone windows.',
-    alternatives: ['chrome', 'edge', 'brave', 'opera'],
+    supported: true,
+    note: 'Requires Firefox 143 or later on Windows, and isn’t available in the Microsoft Store version. On macOS and Linux, Firefox can’t install web apps yet - use Chrome, Edge, Brave, or Opera instead.',
+    steps: [
+      'Open the app in Firefox on Windows.',
+      'Click the "Add tab to taskbar" icon at the right edge of the address bar.',
+      'The app opens in its own window and is pinned to your taskbar (on Windows 11 it also appears in the Start menu).',
+    ],
   },
   'desktop:opera': {
     supported: true,
@@ -147,29 +151,44 @@ const GUIDES = {
     ],
   },
   'ios:chrome': {
-    supported: false,
-    note: 'Apple requires every iOS browser to use its WebKit engine, and only Safari is allowed to install web apps to the home screen.',
-    alternatives: ['safari'],
+    supported: true,
+    note: 'Requires iOS / iPadOS 16.4 or later. On older versions, use Safari instead.',
+    steps: [
+      'Open the app in Chrome.',
+      'Tap the Share icon in the address bar (or open the ••• menu and tap "Share").',
+      'Scroll down and tap "Add to Home Screen".',
+      'Confirm the name and tap "Add" - the app now launches from your home screen.',
+    ],
   },
   'ios:edge': {
-    supported: false,
-    note: 'Apple requires every iOS browser to use its WebKit engine, and only Safari is allowed to install web apps to the home screen.',
-    alternatives: ['safari'],
+    supported: true,
+    note: 'Requires iOS / iPadOS 16.4 or later. On older versions, use Safari instead.',
+    steps: [
+      'Open the app in Edge.',
+      'Tap the ••• menu and tap "Share".',
+      'Scroll down and tap "Add to Home Screen".',
+      'Confirm the name and tap "Add" - the app now launches from your home screen.',
+    ],
   },
   'ios:brave': {
     supported: false,
-    note: 'Apple requires every iOS browser to use its WebKit engine, and only Safari is allowed to install web apps to the home screen.',
-    alternatives: ['safari'],
+    note: 'Since iOS 16.4, Apple lets third-party browsers add web apps to the home screen, but Brave for iOS doesn’t offer this option yet.',
+    alternatives: ['safari', 'chrome', 'edge', 'firefox'],
   },
   'ios:firefox': {
-    supported: false,
-    note: 'Apple requires every iOS browser to use its WebKit engine, and only Safari is allowed to install web apps to the home screen.',
-    alternatives: ['safari'],
+    supported: true,
+    note: 'Requires iOS / iPadOS 16.4 or later. On older versions, use Safari instead.',
+    steps: [
+      'Open the app in Firefox.',
+      'Tap the Share icon in the address bar.',
+      'Tap "Add to Home Screen".',
+      'Confirm the name and tap "Add" - the app now launches from your home screen.',
+    ],
   },
   'ios:opera': {
     supported: false,
-    note: 'Apple requires every iOS browser to use its WebKit engine, and only Safari is allowed to install web apps to the home screen.',
-    alternatives: ['safari'],
+    note: 'Since iOS 16.4, Apple lets third-party browsers add web apps to the home screen, but Opera for iOS doesn’t offer this option yet.',
+    alternatives: ['safari', 'chrome', 'edge', 'firefox'],
   },
 }
 
