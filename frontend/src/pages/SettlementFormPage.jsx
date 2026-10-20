@@ -208,12 +208,8 @@ export default function SettlementFormPage() {
           </p>
         )}
 
-        {!isOnline && (
-          <p className="expense-form-offline-note">
-            {isEditing
-              ? "You're offline - editing requires an internet connection."
-              : "You're offline - this settlement will be saved and synced automatically once you're back online."}
-          </p>
+        {isEditing && !isOnline && (
+          <p className="expense-form-offline-note">You're offline - editing requires an internet connection.</p>
         )}
 
         <button
