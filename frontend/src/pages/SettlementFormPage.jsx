@@ -35,11 +35,12 @@ export default function SettlementFormPage() {
   const [amount, setAmount] = useState('')
   const [currency, setCurrency] = useState('EUR')
   const [date, setDate] = useState(todayIsoDate)
+  const [fromUserId, setFromUserId] = useState(() => currentUser?.id ?? '')
   const [toUserId, setToUserId] = useState('')
   const [showAddPlaceholder, setShowAddPlaceholder] = useState(false)
 
-  const fromUserId = isEditing ? settlement?.from_user.id : currentUser?.id
-  const recipients = (group?.members ?? []).filter((member) => member.id !== fromUserId)
+  const members = group?.members ?? []
+  const recipients = members.filter((member) => String(member.id) !== String(fromUserId))
 
   useEffect(() => {
     if (!isEditing && !toUserId && recipients.length > 0) {
@@ -53,6 +54,7 @@ export default function SettlementFormPage() {
       setAmount(String(settlement.amount))
       setCurrency(settlement.currency)
       setDate(settlement.date)
+      setFromUserId(settlement.from_user.id)
       setToUserId(settlement.to_user.id)
     }
   }, [settlement])
@@ -72,6 +74,7 @@ export default function SettlementFormPage() {
   async function handleSubmit(event) {
     event.preventDefault()
     const payload = {
+      from_user_id: Number(fromUserId),
       to_user_id: Number(toUserId),
       amount: Number(amount).toFixed(2),
       currency: currency.toUpperCase(),
@@ -110,6 +113,15 @@ export default function SettlementFormPage() {
     if (!isOnline) return
     await deleteSettlement({ groupId, settlementId }).unwrap()
     navigate(`/groups/${groupId}`)
+  }
+
+  function handleFromUserChange(value) {
+    setFromUserId(value)
+    // Payer and recipient can't be the same person - move the recipient to someone else.
+    if (String(value) === String(toUserId)) {
+      const fallback = members.find((member) => String(member.id) !== String(value))
+      setToUserId(fallback?.id ?? '')
+    }
   }
 
   function handleToUserChange(value) {
@@ -169,6 +181,22 @@ export default function SettlementFormPage() {
             required
             className="expense-form-input"
           />
+        </label>
+
+        <label className="expense-form-label">
+          Paid by
+          <select
+            value={fromUserId}
+            onChange={(event) => handleFromUserChange(event.target.value)}
+            required
+            className="expense-form-input"
+          >
+            {members.map((member) => (
+              <option key={member.id} value={member.id}>
+                {personName(member, currentUser.id)}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className="expense-form-label">

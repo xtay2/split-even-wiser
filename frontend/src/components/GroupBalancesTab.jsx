@@ -40,22 +40,34 @@ export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor
     (transaction) => transaction.from_user_id !== currentUser.id && transaction.to_user_id !== currentUser.id,
   )
 
-  const pendingSettlementTargets = new Set(
+  // Keyed by payer and recipient, since settlements can be recorded on behalf of others.
+  // Items queued before that was possible have no from_user_id and were always the current user's.
+  const pendingSettlementPairs = new Set(
     queueItems
       .filter(
         (item) =>
           String(item.groupId) === String(groupId) && item.type === 'settlement' && item.status === 'pending',
       )
-      .map((item) => item.payload.to_user_id),
+      .map((item) => `${item.payload.from_user_id ?? currentUser.id}-${item.payload.to_user_id}`),
   )
 
+  function isPending(transaction) {
+    return pendingSettlementPairs.has(`${transaction.from_user_id}-${transaction.to_user_id}`)
+  }
+
   const settleableDebts = myBalances.filter(
-    (transaction) =>
-      transaction.from_user_id === currentUser.id && !pendingSettlementTargets.has(transaction.to_user_id),
+    (transaction) => transaction.from_user_id === currentUser.id && !isPending(transaction),
   )
+
+  function settlementLabel(transaction) {
+    return transaction.from_user_id === currentUser.id
+      ? `Settle up with ${nameFor(transaction.to_user_id)}`
+      : `${nameFor(transaction.from_user_id)} settles up with ${nameFor(transaction.to_user_id)}`
+  }
 
   async function settleTransaction(transaction) {
     const payload = {
+      from_user_id: transaction.from_user_id,
       to_user_id: transaction.to_user_id,
       amount: transaction.amount,
       currency: transaction.currency,
@@ -68,7 +80,7 @@ export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor
           type: 'settlement',
           groupId,
           payload,
-          label: `Settle up with ${nameFor(transaction.to_user_id)}`,
+          label: settlementLabel(transaction),
         }),
       )
       return
@@ -83,11 +95,24 @@ export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor
             type: 'settlement',
             groupId,
             payload,
-            label: `Settle up with ${nameFor(transaction.to_user_id)}`,
+            label: settlementLabel(transaction),
           }),
         )
       }
     }
+  }
+
+  function renderSettleButton(transaction) {
+    return (
+      <button
+        type="button"
+        className="balance-settle-btn"
+        onClick={() => setConfirmingTransaction(transaction)}
+        disabled={isPending(transaction)}
+      >
+        {isPending(transaction) ? 'Queued' : 'Mark settled'}
+      </button>
+    )
   }
 
   async function handleSettle() {
@@ -129,7 +154,9 @@ export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor
         title="Mark debt as settled?"
         message={
           confirmingTransaction
-            ? `This records a payment of ${confirmingTransaction.amount} ${confirmingTransaction.currency} to ${nameFor(confirmingTransaction.to_user_id)}.`
+            ? confirmingTransaction.from_user_id === currentUser.id
+              ? `This records a payment of ${confirmingTransaction.amount} ${confirmingTransaction.currency} to ${nameFor(confirmingTransaction.to_user_id)}.`
+              : `This records that ${nameFor(confirmingTransaction.from_user_id)} paid ${confirmingTransaction.amount} ${confirmingTransaction.currency} to ${nameFor(confirmingTransaction.to_user_id)}.`
             : ''
         }
         confirmLabel="Mark settled"
@@ -172,16 +199,7 @@ export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor
                   <span className={`amount ${youOwe ? 'amount--owed' : 'amount--credit'}`}>
                     {transaction.amount} {transaction.currency}
                   </span>
-                  {youOwe && (
-                    <button
-                      type="button"
-                      className="balance-settle-btn"
-                      onClick={() => setConfirmingTransaction(transaction)}
-                      disabled={pendingSettlementTargets.has(transaction.to_user_id)}
-                    >
-                      {pendingSettlementTargets.has(transaction.to_user_id) ? 'Queued' : 'Mark settled'}
-                    </button>
-                  )}
+                  {renderSettleButton(transaction)}
                 </li>
               )
             })}
@@ -191,6 +209,7 @@ export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor
                   {renderName(transaction.from_user_id)} owes {renderName(transaction.to_user_id)}
                 </span>
                 <span className="amount">{transaction.amount} {transaction.currency}</span>
+                {renderSettleButton(transaction)}
               </li>
             ))}
           </ul>
