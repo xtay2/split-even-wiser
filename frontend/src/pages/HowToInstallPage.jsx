@@ -33,7 +33,7 @@ const GUIDES = {
       'Open the app in Chrome.',
       'Click the install icon (a monitor with a down arrow) at the right edge of the address bar. If you don’t see it, open the ⋮ menu instead.',
       'Select "Install Split Even Wiser…" and confirm with "Install".',
-      'The app opens in its own window, and a shortcut is added to your desktop / Start menu.',
+      'The app opens in its own window and is listed with your other apps (Start menu / Launchpad).',
     ],
   },
   'desktop:edge': {
@@ -51,17 +51,13 @@ const GUIDES = {
       'Open the app in Brave.',
       'Click the install icon in the address bar, or open the ☰ menu.',
       'Select "Install Split Even Wiser…" and confirm.',
-      'Brave opens the app in its own window and adds a desktop shortcut.',
+      'The app opens in its own window and is listed with your other apps.',
     ],
   },
   'desktop:firefox': {
-    supported: true,
-    note: 'Requires Firefox 143 or later on Windows, and isn’t available in the Microsoft Store version. On macOS and Linux, Firefox can’t install web apps yet - use Chrome, Edge, Brave, or Opera instead.',
-    steps: [
-      'Open the app in Firefox on Windows.',
-      'Click the "Add tab to taskbar" icon at the right edge of the address bar.',
-      'The app opens in its own window and is pinned to your taskbar (on Windows 11 it also appears in the Start menu).',
-    ],
+    supported: false,
+    note: 'Firefox for desktop doesn’t support installing web apps. Its "Add tab to taskbar" feature on Windows only pins the site as a browser window - that isn’t an installed app.',
+    alternatives: ['chrome', 'edge', 'brave', 'opera'],
   },
   'desktop:opera': {
     supported: true,
@@ -69,7 +65,7 @@ const GUIDES = {
       'Open the app in Opera.',
       'Click the install icon in the address bar, or open the Opera menu.',
       'Choose "Install Split Even Wiser…" and confirm.',
-      'Opera adds a shortcut to your desktop and taskbar.',
+      'The app opens in its own window and is listed with your other apps.',
     ],
   },
   'desktop:safari': {
@@ -84,7 +80,7 @@ const GUIDES = {
   },
   'desktop:ladybird': {
     supported: false,
-    note: 'Ladybird is still an early-stage browser and does not yet support installing web apps or home-screen shortcuts.',
+    note: 'Ladybird is still an early-stage browser and does not yet support installing web apps.',
     alternatives: ['chrome', 'edge', 'brave', 'opera'],
   },
   'android:chrome': {
@@ -92,53 +88,37 @@ const GUIDES = {
     steps: [
       'Open the app in Chrome.',
       'Tap the ⋮ menu in the top right.',
-      'Tap "Install app" (may show as "Add to Home screen").',
-      'Confirm with "Install" - an icon appears on your home screen and app drawer.',
+      'Tap "Install app". Don’t use "Add to Home screen" - it only creates a shortcut, not the app.',
+      'Confirm with "Install" - the app appears on your home screen and in your app drawer.',
     ],
   },
   'android:edge': {
-    supported: true,
-    steps: [
-      'Open the app in Edge.',
-      'Tap the ••• menu.',
-      'Tap "Add to phone" and choose "Install".',
-      'Confirm - the app appears on your home screen.',
-    ],
+    supported: false,
+    note: 'Edge for Android can only add a shortcut that opens the site inside the browser - that isn’t an installed app. On Android, only Chrome and Samsung Internet can install web apps.',
+    alternatives: ['chrome', 'samsung'],
   },
   'android:brave': {
-    supported: true,
-    steps: [
-      'Open the app in Brave.',
-      'Tap the ⋮ menu.',
-      'Tap "Install app" (may show as "Add to Home screen").',
-      'Confirm - the icon is added to your home screen.',
-    ],
+    supported: false,
+    note: 'Brave for Android can only add a shortcut that opens the site inside the browser - that isn’t an installed app. On Android, only Chrome and Samsung Internet can install web apps.',
+    alternatives: ['chrome', 'samsung'],
   },
   'android:firefox': {
-    supported: true,
-    steps: [
-      'Open the app in Firefox.',
-      'Tap the ⋮ menu.',
-      'Tap "Install".',
-      'Confirm - Firefox adds an app icon to your home screen that opens without browser controls.',
-    ],
+    supported: false,
+    note: 'Firefox for Android can only add a shortcut that opens the site inside the browser - that isn’t an installed app. On Android, only Chrome and Samsung Internet can install web apps.',
+    alternatives: ['chrome', 'samsung'],
   },
   'android:opera': {
-    supported: true,
-    steps: [
-      'Open the app in Opera.',
-      'Tap the Opera menu.',
-      'Tap "Home screen" → "Add to Home screen" (may show as "Install app").',
-      'Confirm - the icon appears on your home screen.',
-    ],
+    supported: false,
+    note: 'Opera for Android can only add a shortcut that opens the site inside the browser - that isn’t an installed app. On Android, only Chrome and Samsung Internet can install web apps.',
+    alternatives: ['chrome', 'samsung'],
   },
   'android:samsung': {
     supported: true,
+    note: 'Installing works on Samsung devices only. On other Android phones, use Chrome instead.',
     steps: [
       'Open the app in Samsung Internet.',
-      'Tap the ☰ menu at the bottom of the screen.',
-      'Tap "Add page to" → "Home screen" (may show as "Install app").',
-      'Confirm - the app icon is added to your home screen.',
+      'Tap the install icon (a down arrow) at the right edge of the address bar.',
+      'Confirm with "Install" - the app appears on your home screen and in your app drawer.',
     ],
   },
   'ios:safari': {
@@ -147,7 +127,7 @@ const GUIDES = {
       'Open the app in Safari.',
       'Tap the Share icon (a square with an arrow pointing up).',
       'Scroll down and tap "Add to Home Screen".',
-      'Confirm the name and tap "Add" - the app now launches full-screen from your home screen.',
+      'Make sure "Open as Web App" is turned on (if shown), then tap "Add" - the app now launches full-screen from your home screen.',
     ],
   },
   'ios:chrome': {
