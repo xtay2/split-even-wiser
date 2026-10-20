@@ -5,7 +5,7 @@ push notifications, groups with fully versioned/audited expenses, and transitive
 debt simplification.
 
 ## Stack
-- Backend: PHP 8.5, Laravel 12 (REST API), PostgreSQL, Sanctum auth, Web Push
+- Backend: PHP 8.5, Laravel 13 (REST API), PostgreSQL, Sanctum auth, Web Push
 - Frontend: React 19, Redux Toolkit (RTK Query), Bootstrap 5, Vite PWA
 - Infra: Docker Compose, Mailhog for local mail testing, docker-mailserver for the
   production-shaped mail path (see `docker/mailserver/README.md`)
@@ -121,7 +121,7 @@ scripts/deploy-logs.sh
 ## Repository layout
 
 ```
-backend/     Laravel 12 API
+backend/     Laravel 13 API
 frontend/    React 19 + Vite PWA
 landing/     Static English marketing page, served on www.split-even-wiser.com
 docker/      Dockerfiles, nginx config, mailserver config
