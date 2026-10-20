@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\Settlement;
+use App\Models\User;
 use App\Notifications\SettlementRecorded;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -45,10 +46,10 @@ class SettlementController extends Controller
             }
         }
 
-        // You can only declare your own debts settled, per the spec - settlements are
-        // recorded as being made by the currently authenticated user.
+        // Any active member can record a settlement on behalf of another member (e.g. for a
+        // placeholder or someone without the app); the payer defaults to the current user.
         $settlement = $group->settlements()->create([
-            'from_user_id' => $request->user()->id,
+            'from_user_id' => $data['from_user_id'],
             'to_user_id' => $data['to_user_id'],
             'amount' => $data['amount'],
             'currency' => $data['currency'],
@@ -57,13 +58,7 @@ class SettlementController extends Controller
             'client_uuid' => $data['client_uuid'] ?? null,
         ]);
 
-        $settlement->toUser->notify(new SettlementRecorded(
-            $group,
-            $settlement,
-            $request->user(),
-            (string) $settlement->amount,
-            $settlement->currency,
-        ));
+        $this->notifyParticipants($group, $settlement, $request->user());
 
         return response()->json($settlement->fresh(['fromUser', 'toUser']), 201);
     }
@@ -73,11 +68,10 @@ class SettlementController extends Controller
         $this->authorizeSettlementInGroup($group, $settlement);
         $this->authorize('update', $settlement);
 
-        // The "from" side of a settlement is fixed at creation - only the recipient,
-        // amount, currency, and date can be corrected afterwards.
         $data = $this->validatePayload($request, $group, $settlement->from_user_id);
 
         $settlement->update([
+            'from_user_id' => $data['from_user_id'],
             'to_user_id' => $data['to_user_id'],
             'amount' => $data['amount'],
             'currency' => $data['currency'],
@@ -98,13 +92,35 @@ class SettlementController extends Controller
     }
 
     /**
-     * @return array{to_user_id: int, amount: string, currency: string, date: string, client_uuid?: string}
+     * Notifies both sides of the settlement, except whoever recorded it.
      */
-    private function validatePayload(Request $request, Group $group, int $fromUserId): array
+    private function notifyParticipants(Group $group, Settlement $settlement, User $recordedBy): void
+    {
+        foreach ([$settlement->fromUser, $settlement->toUser] as $participant) {
+            if ($participant->id === $recordedBy->id) {
+                continue;
+            }
+
+            $participant->notify(new SettlementRecorded(
+                $group,
+                $settlement,
+                $recordedBy,
+                (string) $settlement->amount,
+                $settlement->currency,
+            ));
+        }
+    }
+
+    /**
+     * @param  int  $defaultFromUserId  The payer used when the request doesn't name one.
+     * @return array{from_user_id: int, to_user_id: int, amount: string, currency: string, date: string, client_uuid?: string}
+     */
+    private function validatePayload(Request $request, Group $group, int $defaultFromUserId): array
     {
         $activeMemberIds = $group->groupMembers()->whereNull('left_at')->pluck('user_id');
 
         $data = $request->validate([
+            'from_user_id' => ['sometimes', 'integer', 'in:'.$activeMemberIds->implode(',')],
             'to_user_id' => ['required', 'integer', 'in:'.$activeMemberIds->implode(',')],
             'amount' => ['required', 'numeric', 'min:0.01', 'regex:/^\d+(\.\d{1,2})?$/'],
             'currency' => ['required', 'string', 'size:3', 'regex:/^[A-Za-z]{3}$/'],
@@ -112,8 +128,10 @@ class SettlementController extends Controller
             'client_uuid' => ['nullable', 'uuid'],
         ]);
 
-        if ($data['to_user_id'] === $fromUserId) {
-            throw ValidationException::withMessages(['to_user_id' => 'You cannot settle a debt with yourself.']);
+        $data['from_user_id'] ??= $defaultFromUserId;
+
+        if ($data['to_user_id'] === $data['from_user_id']) {
+            throw ValidationException::withMessages(['to_user_id' => 'Payer and recipient must be different people.']);
         }
 
         $data['currency'] = strtoupper($data['currency']);
