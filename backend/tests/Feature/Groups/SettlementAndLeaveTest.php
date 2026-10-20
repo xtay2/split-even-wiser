@@ -102,6 +102,97 @@ it('rejects settling a debt with yourself', function () {
     ])->assertUnprocessable();
 });
 
+it('records a settlement on behalf of another member', function () {
+    Notification::fake();
+    $alice = User::factory()->create();
+    $bob = User::factory()->create();
+    $carol = User::factory()->create();
+    $group = groupWithMembers($alice, $bob, $carol);
+
+    $response = $this->actingAs($alice)->postJson("/api/groups/{$group->id}/settlements", [
+        'from_user_id' => $bob->id,
+        'to_user_id' => $carol->id,
+        'amount' => 10,
+        'currency' => 'EUR',
+        'date' => '2026-07-16',
+    ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('from_user_id', $bob->id)
+        ->assertJsonPath('to_user_id', $carol->id)
+        ->assertJsonPath('created_by', $alice->id);
+
+    Notification::assertSentTo($bob, SettlementRecorded::class);
+    Notification::assertSentTo($carol, SettlementRecorded::class);
+    Notification::assertNotSentTo($alice, SettlementRecorded::class);
+});
+
+it('does not notify the recorder when they are the recipient of a settlement made on behalf of someone else', function () {
+    Notification::fake();
+    $alice = User::factory()->create();
+    $bob = User::factory()->create();
+    $group = groupWithMembers($alice, $bob);
+
+    $this->actingAs($alice)->postJson("/api/groups/{$group->id}/settlements", [
+        'from_user_id' => $bob->id,
+        'to_user_id' => $alice->id,
+        'amount' => 10,
+        'currency' => 'EUR',
+        'date' => '2026-07-16',
+    ])->assertCreated();
+
+    Notification::assertSentTo($bob, SettlementRecorded::class);
+    Notification::assertNotSentTo($alice, SettlementRecorded::class);
+});
+
+it('rejects a settlement on behalf of someone who is not an active member', function () {
+    $alice = User::factory()->create();
+    $bob = User::factory()->create();
+    $outsider = User::factory()->create();
+    $group = groupWithMembers($alice, $bob);
+
+    $this->actingAs($alice)->postJson("/api/groups/{$group->id}/settlements", [
+        'from_user_id' => $outsider->id,
+        'to_user_id' => $bob->id,
+        'amount' => 10,
+        'currency' => 'EUR',
+        'date' => '2026-07-16',
+    ])->assertUnprocessable()->assertJsonValidationErrors('from_user_id');
+});
+
+it('rejects a settlement on behalf of another member to themselves', function () {
+    $alice = User::factory()->create();
+    $bob = User::factory()->create();
+    $group = groupWithMembers($alice, $bob);
+
+    $this->actingAs($alice)->postJson("/api/groups/{$group->id}/settlements", [
+        'from_user_id' => $bob->id,
+        'to_user_id' => $bob->id,
+        'amount' => 10,
+        'currency' => 'EUR',
+        'date' => '2026-07-16',
+    ])->assertUnprocessable()->assertJsonValidationErrors('to_user_id');
+});
+
+it('lets a member correct who paid a settlement', function () {
+    $alice = User::factory()->create();
+    $bob = User::factory()->create();
+    $carol = User::factory()->create();
+    $group = groupWithMembers($alice, $bob, $carol);
+    $settlement = Settlement::create([
+        'group_id' => $group->id, 'from_user_id' => $alice->id, 'to_user_id' => $carol->id,
+        'amount' => 10, 'currency' => 'EUR', 'date' => '2026-07-16', 'created_by' => $alice->id,
+    ]);
+
+    $this->actingAs($alice)->patchJson("/api/groups/{$group->id}/settlements/{$settlement->id}", [
+        'from_user_id' => $bob->id,
+        'to_user_id' => $carol->id,
+        'amount' => 10,
+        'currency' => 'EUR',
+        'date' => '2026-07-16',
+    ])->assertOk()->assertJsonPath('from_user_id', $bob->id);
+});
+
 it('shows a single settlement', function () {
     $alice = User::factory()->create();
     $bob = User::factory()->create();

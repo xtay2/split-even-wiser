@@ -51,7 +51,7 @@ export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor
                     ? `You paid ${item.amount} ${item.currency} to ${nameFor(item.settlement.to_user.id)}`
                     : iReceived
                       ? `You received ${item.amount} ${item.currency} from ${nameFor(item.settlement.from_user.id)}`
-                      : 'Not involved'
+                      : `${nameFor(item.settlement.from_user.id)} paid ${nameFor(item.settlement.to_user.id)}`
                   return (
                     <li
                       key={item.key}
