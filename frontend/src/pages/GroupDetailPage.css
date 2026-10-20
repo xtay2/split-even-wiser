@@ -327,6 +327,10 @@
   filter: brightness(1.08);
 }
 
+.group-fab--danger {
+  background: var(--owed-red);
+}
+
 .group-fab:disabled {
   opacity: 0.55;
   cursor: not-allowed;

@@ -212,19 +212,20 @@ export default function SettlementFormPage() {
           <p className="expense-form-offline-note">You're offline - editing requires an internet connection.</p>
         )}
 
-        <button
-          type="submit"
-          className="expense-form-submit"
-          disabled={isCreating || isUpdating || !toUserId || (isEditing && !isOnline)}
-        >
-          {isEditing ? 'Save changes' : 'Add settlement'}
-        </button>
-
-        {isEditing && (
-          <button type="button" className="expense-form-delete" onClick={handleDelete} disabled={!isOnline}>
-            Delete settlement
+        <div className="group-fab-column">
+          {isEditing && (
+            <button type="button" className="group-fab group-fab--danger" onClick={handleDelete} disabled={!isOnline}>
+              Delete settlement
+            </button>
+          )}
+          <button
+            type="submit"
+            className="group-fab"
+            disabled={isCreating || isUpdating || !toUserId || (isEditing && !isOnline)}
+          >
+            {isEditing ? 'Save changes' : 'Add settlement'}
           </button>
-        )}
+        </div>
       </form>
     </div>
   )
