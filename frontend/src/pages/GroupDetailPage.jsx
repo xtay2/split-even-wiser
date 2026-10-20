@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, Navigate } from 'react-router'
 import { useSelector } from 'react-redux'
 import { useGetGroupQuery, useLeaveGroupMutation } from '../api/groupsApi'
@@ -11,15 +11,47 @@ import GroupPaymentsTab from '../components/GroupPaymentsTab'
 import GroupMembersTab from '../components/GroupMembersTab'
 import GroupActivityTab from '../components/GroupActivityTab'
 import { LogoutIcon } from '../components/icons/LogoutIcon.tsx'
+import { BalanceIcon } from '../components/icons/BalanceIcon.tsx'
+import { ReceiptLongIcon } from '../components/icons/ReceiptLongIcon.tsx'
+import { GroupIcon } from '../components/icons/GroupIcon.tsx'
+import { HistoryIcon } from '../components/icons/HistoryIcon.tsx'
 import { personName } from '../utils/personName'
 import './GroupDetailPage.css'
 
 const TABS = [
-  { key: 'balances', label: 'Balances' },
-  { key: 'payments', label: 'Payments' },
-  { key: 'members', label: 'Members' },
-  { key: 'activity', label: 'Activity' },
+  { key: 'balances', label: 'Balances', icon: <BalanceIcon /> },
+  { key: 'payments', label: 'Payments', icon: <ReceiptLongIcon /> },
+  { key: 'members', label: 'Members', icon: <GroupIcon /> },
+  { key: 'activity', label: 'Activity', icon: <HistoryIcon /> },
 ]
+
+// Collapses the tab labels to icons once they no longer fit side by side. The width the
+// labels needed is remembered, so widening the screen past it brings them back.
+function useCollapseOnOverflow() {
+  const [node, setNode] = useState(null)
+  const [collapsed, setCollapsed] = useState(false)
+  const labelWidth = useRef(0)
+
+  const check = useCallback(() => {
+    if (!node) return
+    if (!collapsed && node.scrollWidth > node.clientWidth) {
+      labelWidth.current = node.scrollWidth
+      setCollapsed(true)
+    } else if (collapsed && node.clientWidth >= labelWidth.current) {
+      setCollapsed(false)
+    }
+  }, [node, collapsed])
+
+  useLayoutEffect(() => {
+    if (!node) return
+    check()
+    const observer = new ResizeObserver(check)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [node, check])
+
+  return [setNode, collapsed]
+}
 
 export default function GroupDetailPage() {
   const { groupId } = useParams()
@@ -31,6 +63,7 @@ export default function GroupDetailPage() {
   const [leaveGroup, { isLoading: isLeaving, error: leaveError }] = useLeaveGroupMutation()
 
   const [activeTab, setActiveTab] = useState(null)
+  const [tabsRef, tabsCollapsed] = useCollapseOnOverflow()
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
 
   if (groupError?.status === 403 || groupError?.status === 404) {
@@ -112,15 +145,17 @@ export default function GroupDetailPage() {
         onCancel={() => setShowLeaveConfirm(false)}
       />
 
-      <nav className="group-tabs">
+      <nav ref={tabsRef} className={`group-tabs${tabsCollapsed ? ' is-collapsed' : ''}`}>
         {TABS.map((tab) => (
           <button
             key={tab.key}
             type="button"
             className={`group-tabs__item${effectiveTab === tab.key ? ' is-active' : ''}`}
             onClick={() => setActiveTab(tab.key)}
+            aria-label={tab.label}
+            title={tabsCollapsed ? tab.label : undefined}
           >
-            {tab.label}
+            {tabsCollapsed ? tab.icon : tab.label}
           </button>
         ))}
       </nav>
