@@ -296,6 +296,11 @@
   z-index: 15;
 }
 
+/* The bottom nav is hidden behind the keyboard - keep the buttons right above it instead. */
+.keyboard-open .group-fab-column {
+  bottom: calc(var(--keyboard-inset) + 0.9rem);
+}
+
 .group-fab {
   pointer-events: auto;
   display: inline-flex;
