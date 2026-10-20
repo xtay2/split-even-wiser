@@ -5,6 +5,7 @@ import {useGetGroupQuery, useLeaveGroupMutation} from '../api/groupsApi'
 import {selectCurrentUser} from '../features/auth/authSlice'
 import useOnlineStatus from '../features/offline/useOnlineStatus'
 import ConfirmDialog from '../components/ConfirmDialog'
+import LoadingIndicator from '../components/LoadingIndicator'
 import GroupPendingSyncBanner from '../components/GroupPendingSyncBanner'
 import GroupBalancesTab from '../components/GroupBalancesTab'
 import GroupPaymentsTab from '../components/GroupPaymentsTab'
@@ -15,6 +16,7 @@ import {CompareArrowsIcon} from '../components/icons/CompareArrowsIcon.tsx'
 import {GroupIcon} from '../components/icons/GroupIcon.tsx'
 import {HistoryIcon} from '../components/icons/HistoryIcon.tsx'
 import {personName} from '../utils/personName'
+import {WifiOffIcon} from '../components/icons/WifiOffIcon.tsx'
 import './GroupDetailPage.css'
 import {ReceiptIcon} from "../components/icons/ReceiptIcon.tsx";
 
@@ -71,7 +73,7 @@ export default function GroupDetailPage() {
     }
 
     if (!group) {
-        return isOnline ? null : (
+        return isOnline ? <LoadingIndicator label="Loading group…"/> : (
             <p className="friends-empty">This group isn't available offline yet. Open it once while online to use it here.</p>
         )
     }
@@ -114,15 +116,12 @@ export default function GroupDetailPage() {
                         className="group-leave-icon-btn"
                         onClick={() => setShowLeaveConfirm(true)}
                         disabled={isLeaving || !isOnline}
-                        aria-label="Leave group"
-                        title="Leave group"
+                        aria-label={isOnline ? 'Leave group' : 'Leave group (no internet connection)'}
+                        title={isOnline ? 'Leave group' : 'No internet connection'}
                     >
-                        <LogoutIcon/>
+                        {isOnline ? <LogoutIcon/> : <WifiOffIcon/>}
                     </button>
                 </div>
-                {!isOnline && (
-                    <p className="friends-error group-leave-error">Leaving a group requires an internet connection.</p>
-                )}
                 {leaveError && (
                     <p className="friends-error group-leave-error">
                         {leaveError.data?.message ?? 'Could not leave the group.'}

@@ -383,27 +383,24 @@ export default function ExpenseFormPage() {
           </p>
         )}
 
-        {!isOnline && (
-          <p className="expense-form-offline-note">
-            {isEditing
-              ? "You're offline - editing requires an internet connection."
-              : "You're offline - this expense will be saved and synced automatically once you're back online."}
-          </p>
+        {isEditing && !isOnline && (
+          <p className="expense-form-offline-note">You're offline - editing requires an internet connection.</p>
         )}
 
-        <button
-          type="submit"
-          className="expense-form-submit"
-          disabled={isCreating || isUpdating || included.length === 0 || (isEditing && !isOnline)}
-        >
-          {isEditing ? 'Save changes' : 'Add expense'}
-        </button>
-
-        {isEditing && (
-          <button type="button" className="expense-form-delete" onClick={handleDelete} disabled={!isOnline}>
-            Delete expense
+        <div className="group-fab-column">
+          {isEditing && (
+            <button type="button" className="group-fab group-fab--danger" onClick={handleDelete} disabled={!isOnline}>
+              Delete expense
+            </button>
+          )}
+          <button
+            type="submit"
+            className="group-fab"
+            disabled={isCreating || isUpdating || included.length === 0 || (isEditing && !isOnline)}
+          >
+            {isEditing ? 'Save changes' : 'Add expense'}
           </button>
-        )}
+        </div>
       </form>
     </div>
   )

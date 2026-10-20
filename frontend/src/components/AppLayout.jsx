@@ -4,6 +4,7 @@ import {useSelector} from 'react-redux'
 import {selectCurrentUser} from '../features/auth/authSlice'
 import useOnlineStatus from '../features/offline/useOnlineStatus'
 import useOfflineSync from '../features/offline/useOfflineSync'
+import useKeyboardInset from '../features/viewport/useKeyboardInset'
 import {selectPendingQueueCount} from '../features/offline/offlineQueueSlice'
 import './AppLayout.css'
 import {GroupIcon} from "./icons/GroupIcon.tsx";
@@ -22,6 +23,7 @@ export default function AppLayout() {
     const isOnline = useOnlineStatus()
     const pendingCount = useSelector(selectPendingQueueCount)
     useOfflineSync()
+    useKeyboardInset()
 
     const [copied, setCopied] = useState(null)
 

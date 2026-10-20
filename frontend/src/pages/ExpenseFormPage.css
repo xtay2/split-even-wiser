@@ -2,6 +2,8 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  /* Room for the floating Save/Delete buttons */
+  padding-bottom: 8rem;
 }
 
 .expense-form-title {
@@ -157,20 +159,6 @@
   cursor: not-allowed;
 }
 
-.expense-form-delete {
-  padding: 0.65rem 1rem;
-  border: 1px solid var(--owed-red);
-  border-radius: 6px;
-  background: none;
-  color: var(--owed-red);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.expense-form-delete:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
 
 .expense-form-offline-note {
   font-size: 0.82rem;
