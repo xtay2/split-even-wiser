@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useGetGroupsQuery, useCreateGroupMutation } from '../api/groupsApi'
 import { GroupIcon } from '../components/icons/GroupIcon.tsx'
 import './GroupsPage.css'
@@ -7,6 +7,7 @@ import './GroupsPage.css'
 export default function GroupsPage() {
   const { data: groups = [], isLoading } = useGetGroupsQuery()
   const [createGroup, { isLoading: isCreating, error }] = useCreateGroupMutation()
+  const navigate = useNavigate()
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -14,10 +15,8 @@ export default function GroupsPage() {
   async function handleCreate(event) {
     event.preventDefault()
     try {
-      await createGroup({ name, description: description || undefined }).unwrap()
-      setName('')
-      setDescription('')
-      setShowForm(false)
+      const group = await createGroup({ name, description: description || undefined }).unwrap()
+      navigate(`/groups/${group.id}`)
     } catch {
       // error surfaced below
     }
