@@ -11,6 +11,7 @@ import GroupPaymentsTab from '../components/GroupPaymentsTab'
 import GroupMembersTab from '../components/GroupMembersTab'
 import GroupActivityTab from '../components/GroupActivityTab'
 import { LogoutIcon } from '../components/icons/LogoutIcon.tsx'
+import { WifiOffIcon } from '../components/icons/WifiOffIcon.tsx'
 import { personName } from '../utils/personName'
 import './GroupDetailPage.css'
 
@@ -81,15 +82,12 @@ export default function GroupDetailPage() {
             className="group-leave-icon-btn"
             onClick={() => setShowLeaveConfirm(true)}
             disabled={isLeaving || !isOnline}
-            aria-label="Leave group"
-            title="Leave group"
+            aria-label={isOnline ? 'Leave group' : 'Leave group (no internet connection)'}
+            title={isOnline ? 'Leave group' : 'No internet connection'}
           >
-            <LogoutIcon />
+            {isOnline ? <LogoutIcon /> : <WifiOffIcon />}
           </button>
         </div>
-        {!isOnline && (
-          <p className="friends-error group-leave-error">Leaving a group requires an internet connection.</p>
-        )}
         {leaveError && (
           <p className="friends-error group-leave-error">
             {leaveError.data?.message ?? 'Could not leave the group.'}
