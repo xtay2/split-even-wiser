@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux'
 import { useRequestLoginTokenMutation, useVerifyLoginTokenMutation } from '../api/authApi'
 import { credentialsReceived } from '../features/auth/authSlice'
 import { consumePendingInvite } from '../utils/pendingInvite'
+import { isInstalledPwa } from '../utils/pwaEnvironment'
 import './LoginPage.css'
 
 export default function LoginPage() {
@@ -128,7 +129,7 @@ export default function LoginPage() {
         )}
 
         <div className="login-footer">
-          <Link to="/pwa/install">How to Install</Link>
+          {!isInstalledPwa() && <Link to="/pwa/install">How to Install</Link>}
           <Link to="/imprint">Imprint</Link>
         </div>
       </div>

@@ -28,3 +28,13 @@ export function detectBrowser() {
   const match = BROWSER_NAME_PATTERNS.find(([pattern]) => pattern.test(browser.name ?? ''))
   return match ? match[1] : 'chrome'
 }
+
+// True when running as the installed PWA rather than inside a regular browser tab.
+// iOS Safari doesn't support the display-mode media query and exposes navigator.standalone instead.
+export function isInstalledPwa() {
+  return (
+    window.matchMedia?.('(display-mode: standalone)').matches ||
+    window.matchMedia?.('(display-mode: fullscreen)').matches ||
+    window.navigator.standalone === true
+  )
+}

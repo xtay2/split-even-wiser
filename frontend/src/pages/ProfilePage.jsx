@@ -11,6 +11,7 @@ import {
 import { loggedOut, selectCurrentUser, userUpdated } from '../features/auth/authSlice'
 import { isPushSupported, usePushSubscription } from '../features/push/usePushSubscription'
 import EditFieldDialog from '../components/EditFieldDialog'
+import { isInstalledPwa } from '../utils/pwaEnvironment'
 import './ProfilePage.css'
 
 const PUSH_STATUS_LABEL = {
@@ -177,7 +178,7 @@ export default function ProfilePage() {
       </button>
 
       <div className="profile-footer">
-        <Link to="/pwa/install">How to Install</Link>
+        {!isInstalledPwa() && <Link to="/pwa/install">How to Install</Link>}
         <Link to="/imprint">Imprint</Link>
       </div>
 
