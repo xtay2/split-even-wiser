@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useDispatch } from 'react-redux'
 import { useRequestLoginTokenMutation, useVerifyLoginTokenMutation } from '../api/authApi'
 import { credentialsReceived } from '../features/auth/authSlice'
+import useKeyboardInset from '../features/viewport/useKeyboardInset'
 import { consumePendingInvite } from '../utils/pendingInvite'
 import { isInstalledPwa } from '../utils/pwaEnvironment'
 import './LoginPage.css'
@@ -18,6 +19,15 @@ export default function LoginPage() {
   const [code, setCode] = useState('')
   const [needsUsername, setNeedsUsername] = useState(false)
   const [username, setUsername] = useState('')
+  const keyboardInset = useKeyboardInset()
+
+  // Focusing an input only scrolls the input itself into view - pull the rest of its form
+  // (notably the submit button) above the keyboard as well.
+  useEffect(() => {
+    if (keyboardInset === 0) return
+    const form = document.activeElement?.closest('form')
+    form?.querySelector('[type="submit"]')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }, [keyboardInset, sent, needsUsername])
 
   async function handleSubmit(event) {
     event.preventDefault()

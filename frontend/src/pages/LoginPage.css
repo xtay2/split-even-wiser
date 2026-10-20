@@ -4,6 +4,8 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
+  /* Leaves room to scroll the form above the on-screen keyboard */
+  padding-bottom: calc(1.5rem + var(--keyboard-inset, 0px));
   background: var(--paper);
 }
 
