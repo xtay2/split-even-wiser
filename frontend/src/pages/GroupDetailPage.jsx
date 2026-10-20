@@ -1,8 +1,8 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
-import { useParams, useNavigate, Navigate } from 'react-router'
-import { useSelector } from 'react-redux'
-import { useGetGroupQuery, useLeaveGroupMutation } from '../api/groupsApi'
-import { selectCurrentUser } from '../features/auth/authSlice'
+import {useCallback, useLayoutEffect, useRef, useState} from 'react'
+import {Navigate, useNavigate, useParams} from 'react-router'
+import {useSelector} from 'react-redux'
+import {useGetGroupQuery, useLeaveGroupMutation} from '../api/groupsApi'
+import {selectCurrentUser} from '../features/auth/authSlice'
 import useOnlineStatus from '../features/offline/useOnlineStatus'
 import ConfirmDialog from '../components/ConfirmDialog'
 import GroupPendingSyncBanner from '../components/GroupPendingSyncBanner'
@@ -10,179 +10,179 @@ import GroupBalancesTab from '../components/GroupBalancesTab'
 import GroupPaymentsTab from '../components/GroupPaymentsTab'
 import GroupMembersTab from '../components/GroupMembersTab'
 import GroupActivityTab from '../components/GroupActivityTab'
-import { LogoutIcon } from '../components/icons/LogoutIcon.tsx'
-import { BalanceIcon } from '../components/icons/BalanceIcon.tsx'
-import { ReceiptLongIcon } from '../components/icons/ReceiptLongIcon.tsx'
-import { GroupIcon } from '../components/icons/GroupIcon.tsx'
-import { HistoryIcon } from '../components/icons/HistoryIcon.tsx'
-import { personName } from '../utils/personName'
+import {LogoutIcon} from '../components/icons/LogoutIcon.tsx'
+import {CompareArrowsIcon} from '../components/icons/CompareArrowsIcon.tsx'
+import {GroupIcon} from '../components/icons/GroupIcon.tsx'
+import {HistoryIcon} from '../components/icons/HistoryIcon.tsx'
+import {personName} from '../utils/personName'
 import './GroupDetailPage.css'
+import {ReceiptIcon} from "../components/icons/ReceiptIcon.tsx";
 
 const TABS = [
-  { key: 'balances', label: 'Balances', icon: <BalanceIcon /> },
-  { key: 'payments', label: 'Payments', icon: <ReceiptLongIcon /> },
-  { key: 'members', label: 'Members', icon: <GroupIcon /> },
-  { key: 'activity', label: 'Activity', icon: <HistoryIcon /> },
+    {key: 'balances', label: 'Balances', icon: <CompareArrowsIcon/>},
+    {key: 'payments', label: 'Payments', icon: <ReceiptIcon/>},
+    {key: 'members', label: 'Members', icon: <GroupIcon/>},
+    {key: 'activity', label: 'Activity', icon: <HistoryIcon/>},
 ]
 
 // Collapses the tab labels to icons once they no longer fit side by side. The width the
 // labels needed is remembered, so widening the screen past it brings them back.
 function useCollapseOnOverflow() {
-  const [node, setNode] = useState(null)
-  const [collapsed, setCollapsed] = useState(false)
-  const labelWidth = useRef(0)
+    const [node, setNode] = useState(null)
+    const [collapsed, setCollapsed] = useState(false)
+    const labelWidth = useRef(0)
 
-  const check = useCallback(() => {
-    if (!node) return
-    if (!collapsed && node.scrollWidth > node.clientWidth) {
-      labelWidth.current = node.scrollWidth
-      setCollapsed(true)
-    } else if (collapsed && node.clientWidth >= labelWidth.current) {
-      setCollapsed(false)
-    }
-  }, [node, collapsed])
+    const check = useCallback(() => {
+        if (!node) return
+        if (!collapsed && node.scrollWidth > node.clientWidth) {
+            labelWidth.current = node.scrollWidth
+            setCollapsed(true)
+        } else if (collapsed && node.clientWidth >= labelWidth.current) {
+            setCollapsed(false)
+        }
+    }, [node, collapsed])
 
-  useLayoutEffect(() => {
-    if (!node) return
-    check()
-    const observer = new ResizeObserver(check)
-    observer.observe(node)
-    return () => observer.disconnect()
-  }, [node, check])
+    useLayoutEffect(() => {
+        if (!node) return
+        check()
+        const observer = new ResizeObserver(check)
+        observer.observe(node)
+        return () => observer.disconnect()
+    }, [node, check])
 
-  return [setNode, collapsed]
+    return [setNode, collapsed]
 }
 
 export default function GroupDetailPage() {
-  const { groupId } = useParams()
-  const navigate = useNavigate()
-  const currentUser = useSelector(selectCurrentUser)
-  const isOnline = useOnlineStatus()
+    const {groupId} = useParams()
+    const navigate = useNavigate()
+    const currentUser = useSelector(selectCurrentUser)
+    const isOnline = useOnlineStatus()
 
-  const { data: group, error: groupError } = useGetGroupQuery(groupId)
-  const [leaveGroup, { isLoading: isLeaving, error: leaveError }] = useLeaveGroupMutation()
+    const {data: group, error: groupError} = useGetGroupQuery(groupId)
+    const [leaveGroup, {isLoading: isLeaving, error: leaveError}] = useLeaveGroupMutation()
 
-  const [activeTab, setActiveTab] = useState(null)
-  const [tabsRef, tabsCollapsed] = useCollapseOnOverflow()
-  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
+    const [activeTab, setActiveTab] = useState(null)
+    const [tabsRef, tabsCollapsed] = useCollapseOnOverflow()
+    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
 
-  if (groupError?.status === 403 || groupError?.status === 404) {
-    return <Navigate to="/groups" replace />
-  }
-
-  if (!group) {
-    return isOnline ? null : (
-      <p className="friends-empty">This group isn't available offline yet. Open it once while online to use it here.</p>
-    )
-  }
-
-  const membersById = Object.fromEntries(group.members.map((member) => [member.id, member]))
-  const nameFor = (userId) => personName(membersById[userId], currentUser.id)
-
-  // Nobody to split with yet - land on Members instead of an empty Payments tab, until
-  // the person picks a tab themselves.
-  const hasOtherMembers = group.members.length > 1
-  const isLastMember = group.members.length === 1
-  const effectiveTab = activeTab ?? (hasOtherMembers ? 'payments' : 'members')
-
-  async function handleLeave() {
-    try {
-      await leaveGroup({ groupId, userId: currentUser.id }).unwrap()
-      navigate('/groups')
-    } catch {
-      setShowLeaveConfirm(false)
+    if (groupError?.status === 403 || groupError?.status === 404) {
+        return <Navigate to="/groups" replace/>
     }
-  }
 
-  return (
-    <div className="group-detail-screen">
-      <header className="group-detail-header">
-        <div className="group-detail-header__row">
-          <div className="group-detail-header__text">
-            <button
-              type="button"
-              className="group-detail-title group-detail-title-btn"
-              onClick={() => navigate(`/groups/${groupId}/edit`)}
-              title="Edit group"
-            >
-              {group.name}
-            </button>
-            {group.description && <p className="group-detail-description">{group.description}</p>}
-          </div>
-          <button
-            type="button"
-            className="group-leave-icon-btn"
-            onClick={() => setShowLeaveConfirm(true)}
-            disabled={isLeaving || !isOnline}
-            aria-label="Leave group"
-            title="Leave group"
-          >
-            <LogoutIcon />
-          </button>
-        </div>
-        {!isOnline && (
-          <p className="friends-error group-leave-error">Leaving a group requires an internet connection.</p>
-        )}
-        {leaveError && (
-          <p className="friends-error group-leave-error">
-            {leaveError.data?.message ?? 'Could not leave the group.'}
-          </p>
-        )}
-      </header>
+    if (!group) {
+        return isOnline ? null : (
+            <p className="friends-empty">This group isn't available offline yet. Open it once while online to use it here.</p>
+        )
+    }
 
-      <ConfirmDialog
-        open={showLeaveConfirm}
-        title="Leave group?"
-        message={
-          isLastMember
-            ? `You're the last member of "${group.name}". Leaving will permanently delete this group and its entire history.`
-            : `You'll lose access to "${group.name}" until someone adds you back.`
+    const membersById = Object.fromEntries(group.members.map((member) => [member.id, member]))
+    const nameFor = (userId) => personName(membersById[userId], currentUser.id)
+
+    // Nobody to split with yet - land on Members instead of an empty Payments tab, until
+    // the person picks a tab themselves.
+    const hasOtherMembers = group.members.length > 1
+    const isLastMember = group.members.length === 1
+    const effectiveTab = activeTab ?? (hasOtherMembers ? 'payments' : 'members')
+
+    async function handleLeave() {
+        try {
+            await leaveGroup({groupId, userId: currentUser.id}).unwrap()
+            navigate('/groups')
+        } catch {
+            setShowLeaveConfirm(false)
         }
-        confirmLabel="Leave group"
-        danger
-        isConfirming={isLeaving}
-        onConfirm={handleLeave}
-        onCancel={() => setShowLeaveConfirm(false)}
-      />
+    }
 
-      <nav ref={tabsRef} className={`group-tabs${tabsCollapsed ? ' is-collapsed' : ''}`}>
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            className={`group-tabs__item${effectiveTab === tab.key ? ' is-active' : ''}`}
-            onClick={() => setActiveTab(tab.key)}
-            aria-label={tab.label}
-            title={tabsCollapsed ? tab.label : undefined}
-          >
-            {tabsCollapsed ? tab.icon : tab.label}
-          </button>
-        ))}
-      </nav>
+    return (
+        <div className="group-detail-screen">
+            <header className="group-detail-header">
+                <div className="group-detail-header__row">
+                    <div className="group-detail-header__text">
+                        <button
+                            type="button"
+                            className="group-detail-title group-detail-title-btn"
+                            onClick={() => navigate(`/groups/${groupId}/edit`)}
+                            title="Edit group"
+                        >
+                            {group.name}
+                        </button>
+                        {group.description && <p className="group-detail-description">{group.description}</p>}
+                    </div>
+                    <button
+                        type="button"
+                        className="group-leave-icon-btn"
+                        onClick={() => setShowLeaveConfirm(true)}
+                        disabled={isLeaving || !isOnline}
+                        aria-label="Leave group"
+                        title="Leave group"
+                    >
+                        <LogoutIcon/>
+                    </button>
+                </div>
+                {!isOnline && (
+                    <p className="friends-error group-leave-error">Leaving a group requires an internet connection.</p>
+                )}
+                {leaveError && (
+                    <p className="friends-error group-leave-error">
+                        {leaveError.data?.message ?? 'Could not leave the group.'}
+                    </p>
+                )}
+            </header>
 
-      <GroupPendingSyncBanner groupId={groupId} />
+            <ConfirmDialog
+                open={showLeaveConfirm}
+                title="Leave group?"
+                message={
+                    isLastMember
+                        ? `You're the last member of "${group.name}". Leaving will permanently delete this group and its entire history.`
+                        : `You'll lose access to "${group.name}" until someone adds you back.`
+                }
+                confirmLabel="Leave group"
+                danger
+                isConfirming={isLeaving}
+                onConfirm={handleLeave}
+                onCancel={() => setShowLeaveConfirm(false)}
+            />
 
-      <GroupBalancesTab
-        hidden={effectiveTab !== 'balances'}
-        groupId={groupId}
-        currentUser={currentUser}
-        nameFor={nameFor}
-        membersById={membersById}
-      />
-      <GroupPaymentsTab
-        hidden={effectiveTab !== 'payments'}
-        groupId={groupId}
-        currentUser={currentUser}
-        nameFor={nameFor}
-      />
-      <GroupMembersTab
-        hidden={effectiveTab !== 'members'}
-        groupId={groupId}
-        group={group}
-        currentUser={currentUser}
-        isOnline={isOnline}
-      />
-      <GroupActivityTab hidden={effectiveTab !== 'activity'} groupId={groupId} currentUserId={currentUser.id} />
-    </div>
-  )
+            <nav ref={tabsRef} className={`group-tabs${tabsCollapsed ? ' is-collapsed' : ''}`}>
+                {TABS.map((tab) => (
+                    <button
+                        key={tab.key}
+                        type="button"
+                        className={`group-tabs__item${effectiveTab === tab.key ? ' is-active' : ''}`}
+                        onClick={() => setActiveTab(tab.key)}
+                        aria-label={tab.label}
+                        title={tabsCollapsed ? tab.label : undefined}
+                    >
+                        {tabsCollapsed ? tab.icon : tab.label}
+                    </button>
+                ))}
+            </nav>
+
+            <GroupPendingSyncBanner groupId={groupId}/>
+
+            <GroupBalancesTab
+                hidden={effectiveTab !== 'balances'}
+                groupId={groupId}
+                currentUser={currentUser}
+                nameFor={nameFor}
+                membersById={membersById}
+            />
+            <GroupPaymentsTab
+                hidden={effectiveTab !== 'payments'}
+                groupId={groupId}
+                currentUser={currentUser}
+                nameFor={nameFor}
+            />
+            <GroupMembersTab
+                hidden={effectiveTab !== 'members'}
+                groupId={groupId}
+                group={group}
+                currentUser={currentUser}
+                isOnline={isOnline}
+            />
+            <GroupActivityTab hidden={effectiveTab !== 'activity'} groupId={groupId} currentUserId={currentUser.id}/>
+        </div>
+    )
 }
