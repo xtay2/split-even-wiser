@@ -43,11 +43,7 @@ export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor
                   const editPath = `/groups/${groupId}/settlements/${item.settlement.id}`
                   const iPaid = currentUser.id === item.settlement.from_user.id
                   const iReceived = currentUser.id === item.settlement.to_user.id
-                  const settlementShareClass = iPaid
-                    ? ' expense-row__share--owed'
-                    : iReceived
-                      ? ' expense-row__share--credit'
-                      : ''
+                  const settlementShareClass = iPaid || iReceived ? ' expense-row__share--credit' : ''
                   const settlementShareLabel = iPaid
                     ? `You paid ${item.amount} ${item.currency} to ${nameFor(item.settlement.to_user.id)}`
                     : iReceived
