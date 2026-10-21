@@ -1,4 +1,5 @@
-FROM php:8.5-fpm-alpine
+# Pinned to >= 8.5.12 for CVE-2026-109618 / CVE-2026-109619 (php2shell RCE)
+FROM php:8.5.12-fpm-alpine
 
 RUN apk add --no-cache \
         postgresql-dev \
