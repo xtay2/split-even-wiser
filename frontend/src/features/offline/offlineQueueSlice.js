@@ -58,8 +58,23 @@ const offlineQueueSlice = createSlice({
       if (item) {
         item.status = 'error'
         item.error = action.payload.error
+        // false only when the server rejected the item itself (4xx) - retrying won't help there.
+        item.retryable = action.payload.retryable ?? true
       }
       persist(state)
+    },
+    // Puts failed items that may well succeed now (server errors, e.g. during a deploy) back in
+    // line. Items that failed before `retryable` existed have no flag and are retried too.
+    retryableItemsRequeued(state) {
+      let changed = false
+      for (const item of state.items) {
+        if (item.status === 'error' && item.retryable !== false) {
+          item.status = 'pending'
+          item.error = null
+          changed = true
+        }
+      }
+      if (changed) persist(state)
     },
     itemRetried(state, action) {
       const item = state.items.find((entry) => entry.id === action.payload.id)
@@ -103,8 +118,15 @@ const offlineQueueSlice = createSlice({
   },
 })
 
-export const { itemQueued, itemSyncSucceeded, itemSyncFailed, itemRetried, itemDiscarded, localIdResolved } =
-  offlineQueueSlice.actions
+export const {
+  itemQueued,
+  itemSyncSucceeded,
+  itemSyncFailed,
+  retryableItemsRequeued,
+  itemRetried,
+  itemDiscarded,
+  localIdResolved,
+} = offlineQueueSlice.actions
 export default offlineQueueSlice.reducer
 
 // Builds an itemQueued action with a fresh client UUID. The same UUID is sent to the API as
@@ -154,8 +176,28 @@ export function placeholderMemberFromItem(item) {
 }
 
 export const selectQueueItems = (state) => state.offlineQueue.items
-export const selectPendingQueueCount = (state) =>
-  state.offlineQueue.items.filter((item) => item.status === 'pending').length
+// The local ids (offline-created group/placeholders) an item can't be sent without.
+export function localIdsReferencedBy(item) {
+  const ids = [item.type === 'group' ? null : item.groupId]
+  if (item.type === 'expense') {
+    ids.push(item.payload.paid_by, ...item.payload.shares.map((share) => share.user_id))
+  } else if (item.type === 'settlement') {
+    ids.push(item.payload.from_user_id, item.payload.to_user_id)
+  }
+  return ids.filter(isLocalId)
+}
+
+// Items still to be sent - not counting those stuck behind a group/placeholder that failed, as
+// they won't go anywhere until that one is retried or discarded.
+export const selectPendingQueueCount = (state) => {
+  const { items } = state.offlineQueue
+  const failedLocalIds = new Set(
+    items.filter((item) => item.status === 'error' && item.payload.local_id).map((item) => item.payload.local_id),
+  )
+  return items.filter(
+    (item) => item.status === 'pending' && !localIdsReferencedBy(item).some((id) => failedLocalIds.has(id)),
+  ).length
+}
 export const selectResolvedIds = (state) => state.offlineQueue.resolvedIds
 
 // Maps a local id to the real one once it has synced; anything else is returned unchanged.
