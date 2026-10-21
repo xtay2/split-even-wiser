@@ -22,7 +22,13 @@ export default function GroupsPage() {
   // Groups created offline are listed until they've synced and show up in the server's list.
   const localGroups = queueItems
     .filter((item) => item.type === 'group')
-    .map((item) => ({ id: item.groupId, name: item.payload.name, description: item.payload.description, isLocal: true }))
+    .map((item) => ({
+      id: item.groupId,
+      name: item.payload.name,
+      description: item.payload.description,
+      isLocal: true,
+      syncFailed: item.status === 'error',
+    }))
   const groups = [...serverGroups, ...localGroups]
 
   function queueGroup(payload) {
@@ -106,7 +112,11 @@ export default function GroupsPage() {
             <li key={group.id}>
               <Link to={`/groups/${group.id}`} className="groups-card">
                 <span className="groups-card__name">{group.name}</span>
-                {group.isLocal && <span className="groups-card__pending">Waiting to sync…</span>}
+                {group.isLocal && (
+                  <span className="groups-card__pending">
+                    {group.syncFailed ? "Couldn't sync - open to retry" : 'Waiting to sync…'}
+                  </span>
+                )}
                 {group.description && (
                   <span className="groups-card__description">{group.description}</span>
                 )}

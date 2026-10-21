@@ -2,10 +2,11 @@ import { useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { groupsApi } from '../../api/groupsApi'
 import {
-  isLocalId,
   itemSyncFailed,
   itemSyncSucceeded,
   localIdResolved,
+  localIdsReferencedBy,
+  retryableItemsRequeued,
   selectQueueItems,
 } from './offlineQueueSlice'
 
@@ -31,15 +32,29 @@ function withTimeout(promise) {
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer))
 }
 
-// The local ids (offline-created group/placeholders) an item can't be sent without.
-function localIdsReferencedBy(item) {
-  const ids = [item.type === 'group' ? null : item.groupId]
-  if (item.type === 'expense') {
-    ids.push(item.payload.paid_by, ...item.payload.shares.map((share) => share.user_id))
-  } else if (item.type === 'settlement') {
-    ids.push(item.payload.from_user_id, item.payload.to_user_id)
+// The server rejected the item itself (validation, permissions, ...) - as opposed to a server
+// error, which may well be gone on the next attempt.
+function isClientError(error) {
+  return typeof error?.status === 'number' && error.status >= 400 && error.status < 500
+}
+
+// A placeholder whose first attempt reached the server but whose retry didn't carry the same
+// client_uuid (queued before it was sent) is rejected as a duplicate name. The group can only
+// hold one placeholder with that name, so that one is the person meant - adopt it.
+async function findExistingPlaceholder(dispatch, item) {
+  const { name, email } = item.payload
+  const displayName = (name || email?.split('@')[0] || '').trim().toLowerCase()
+  const request = dispatch(groupsApi.endpoints.getGroup.initiate(item.groupId, { forceRefetch: true }))
+  try {
+    const group = await request.unwrap()
+    return group.members.find(
+      (member) => member.is_placeholder && (member.display_name ?? '').trim().toLowerCase() === displayName,
+    )
+  } catch {
+    return undefined
+  } finally {
+    request.unsubscribe()
   }
-  return ids.filter(isLocalId)
 }
 
 async function sendItem(dispatch, item) {
@@ -52,10 +67,17 @@ async function sendItem(dispatch, item) {
       return
     }
     case 'placeholder': {
-      const result = await dispatch(
-        groupsApi.endpoints.addPlaceholderMember.initiate({ groupId: item.groupId, ...payload }),
-      ).unwrap()
-      dispatch(localIdResolved({ localId, realId: result.placeholder.id }))
+      let placeholder
+      try {
+        const result = await dispatch(
+          groupsApi.endpoints.addPlaceholderMember.initiate({ groupId: item.groupId, ...payload }),
+        ).unwrap()
+        placeholder = result.placeholder
+      } catch (error) {
+        placeholder = error?.data?.errors?.name ? await findExistingPlaceholder(dispatch, item) : undefined
+        if (!placeholder) throw error
+      }
+      dispatch(localIdResolved({ localId, realId: placeholder.id }))
       return
     }
     case 'expense':
@@ -71,7 +93,8 @@ async function sendItem(dispatch, item) {
 // into later items) before anything referencing it is sent.
 // Runs on mount (in case items were queued in a previous session), whenever the queue changes, on
 // every 'online' event and when the app comes back to the foreground - and keeps retrying with
-// backoff while the network keeps failing.
+// backoff while the network or server keeps failing. Items the server rejected outright stay
+// failed until the user retries or discards them.
 export default function useOfflineSync() {
   const dispatch = useDispatch()
   const store = useStore()
@@ -79,16 +102,37 @@ export default function useOfflineSync() {
   const isSyncingRef = useRef(false)
   const retryTimerRef = useRef(null)
   const retryDelayRef = useRef(RETRY_BASE_DELAY_MS)
+  // Set when sync was asked for mid-run: the options for the run to do once this one is done.
+  const rerunRef = useRef(null)
+  // A failure that wants a retry later - kept across runs, so an immediate re-run (which may well
+  // find nothing to send) doesn't swallow it.
+  const retryLaterRef = useRef(false)
+  // Lets the timers below call syncQueue without it referencing itself.
+  const syncQueueRef = useRef(null)
 
-  const syncQueue = useCallback(async () => {
-    if (isSyncingRef.current || !navigator.onLine) return
+  // `requeueFailed` also puts items that failed for a possibly passing reason back in line - only
+  // on the triggers that aren't caused by the queue changing, so a failing item can't loop.
+  const syncQueue = useCallback(async ({ requeueFailed = false } = {}) => {
+    if (!navigator.onLine) return
+    if (isSyncingRef.current) {
+      // Something changed mid-run (e.g. an item retried by hand) - go again once this run is done.
+      rerunRef.current = { requeueFailed: requeueFailed || Boolean(rerunRef.current?.requeueFailed) }
+      return
+    }
     isSyncingRef.current = true
-    clearTimeout(retryTimerRef.current)
-    retryTimerRef.current = null
-    let hitNetworkError = false
+    rerunRef.current = null
+
+    if (requeueFailed) {
+      // This run is the retry - a scheduled one would only repeat it.
+      clearTimeout(retryTimerRef.current)
+      retryTimerRef.current = null
+      retryLaterRef.current = false
+      dispatch(retryableItemsRequeued())
+    }
 
     try {
       const attempted = new Set()
+      const blocked = new Set()
       for (;;) {
         // Re-read the queue each round: a synced group/placeholder rewrites the items after it.
         const queue = selectQueueItems(store.getState())
@@ -103,8 +147,12 @@ export default function useOfflineSync() {
           const isBlocked = unresolved.some((localId) =>
             queue.some((entry) => entry.payload.local_id === localId),
           )
-          if (!isBlocked) {
-            dispatch(itemSyncFailed({ id: item.id, error: 'Refers to a person that was discarded.' }))
+          if (isBlocked) {
+            blocked.add(item.id)
+          } else {
+            dispatch(
+              itemSyncFailed({ id: item.id, error: 'Refers to a person that was discarded.', retryable: false }),
+            )
           }
           continue
         }
@@ -113,16 +161,22 @@ export default function useOfflineSync() {
           await withTimeout(sendItem(dispatch, item))
           dispatch(itemSyncSucceeded({ id: item.id }))
           retryDelayRef.current = RETRY_BASE_DELAY_MS
+          // This may have been what the blocked items were waiting for - give them another go.
+          for (const id of blocked) attempted.delete(id)
+          blocked.clear()
         } catch (error) {
           if (isNetworkError(error)) {
             // Connection isn't (or no longer) working - stop here and retry later.
-            hitNetworkError = true
+            retryLaterRef.current = true
             break
           }
+          const retryable = !isClientError(error)
+          if (retryable) retryLaterRef.current = true
           dispatch(
             itemSyncFailed({
               id: item.id,
               error: error?.data?.message ?? 'The server rejected this item.',
+              retryable,
             }),
           )
         }
@@ -131,25 +185,41 @@ export default function useOfflineSync() {
       isSyncingRef.current = false
     }
 
-    if (hitNetworkError) {
-      retryTimerRef.current = setTimeout(syncQueue, retryDelayRef.current)
+    if (rerunRef.current) {
+      const options = rerunRef.current
+      setTimeout(() => syncQueueRef.current(options), 0)
+    } else if (retryLaterRef.current && !retryTimerRef.current) {
+      retryTimerRef.current = setTimeout(() => {
+        retryTimerRef.current = null
+        syncQueueRef.current({ requeueFailed: true })
+      }, retryDelayRef.current)
       retryDelayRef.current = Math.min(retryDelayRef.current * 2, RETRY_MAX_DELAY_MS)
     }
   }, [dispatch, store])
 
+  useEffect(() => {
+    syncQueueRef.current = syncQueue
+  }, [syncQueue])
+
+  // On start, also retry what failed in an earlier session.
+  useEffect(() => {
+    syncQueue({ requeueFailed: true })
+  }, [syncQueue])
+
   // Re-run whenever the queue changes, so newly queued or retried items go out right away.
   useEffect(() => {
-    if (navigator.onLine) syncQueue()
+    syncQueue()
   }, [syncQueue, items])
 
   useEffect(() => {
+    const syncAndRetryFailed = () => syncQueue({ requeueFailed: true })
     const syncWhenVisible = () => {
-      if (document.visibilityState === 'visible') syncQueue()
+      if (document.visibilityState === 'visible') syncAndRetryFailed()
     }
-    window.addEventListener('online', syncQueue)
+    window.addEventListener('online', syncAndRetryFailed)
     document.addEventListener('visibilitychange', syncWhenVisible)
     return () => {
-      window.removeEventListener('online', syncQueue)
+      window.removeEventListener('online', syncAndRetryFailed)
       document.removeEventListener('visibilitychange', syncWhenVisible)
       clearTimeout(retryTimerRef.current)
     }
