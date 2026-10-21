@@ -2,6 +2,9 @@
 
 use App\Models\Group;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Tests\TestCase;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,13 +17,13 @@ use App\Models\User;
 |
 */
 
-pest()->extend(Tests\TestCase::class)
-    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+pest()->extend(TestCase::class)
+    ->use(RefreshDatabase::class)
     ->in('Feature');
 
 // The "array" cache store backing the rate limiter is a plain in-memory array that
 // otherwise leaks attempt counts across test cases within the same suite run.
-beforeEach(fn () => Illuminate\Support\Facades\Cache::flush());
+beforeEach(fn () => Cache::flush());
 
 /*
 |--------------------------------------------------------------------------
@@ -49,4 +52,3 @@ function groupWithMembers(User ...$users): Group
 
     return $group;
 }
-

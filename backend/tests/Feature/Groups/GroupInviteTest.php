@@ -3,6 +3,8 @@
 use App\Models\Group;
 use App\Models\GroupInvite;
 use App\Models\User;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 
 it('creates a never-expiring invite link', function () {
     $alice = User::factory()->create();
@@ -189,12 +191,12 @@ it('does not duplicate the membership when accept is raced by a duplicate reques
 
     // Directly prove the DB enforces uniqueness even if two requests both raced past the
     // "existing membership" check before either had committed its insert.
-    expect(fn () => \Illuminate\Support\Facades\DB::table('group_members')->insert([
+    expect(fn () => DB::table('group_members')->insert([
         'group_id' => $group->id,
         'user_id' => $bob->id,
         'joined_at' => now(),
         'left_at' => null,
         'created_at' => now(),
         'updated_at' => now(),
-    ]))->toThrow(\Illuminate\Database\QueryException::class);
+    ]))->toThrow(QueryException::class);
 });
