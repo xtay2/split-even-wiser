@@ -1,0 +1,129 @@
+name: CI
+
+# Runs before code lands on main: on every PR targeting main (auto-fixes lint/style
+# issues and commits them back to the PR branch) and on direct pushes to main
+# (check only - nothing is committed to main).
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  lint:
+    name: Lint & format (oxlint, pint)
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # On PRs check out the branch itself (not the merge commit) so fixes can be pushed.
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          # Pushes with GITHUB_TOKEN don't re-trigger workflows; set AUTOFIX_TOKEN (a PAT)
+          # if the fix commit should get its own CI run / status checks.
+          token: ${{ secrets.AUTOFIX_TOKEN || github.token }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+          coverage: none
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts
+
+      - name: oxlint --fix
+        working-directory: frontend
+        run: npx oxlint --fix
+
+      - name: pint
+        working-directory: backend
+        run: vendor/bin/pint
+
+      - name: Commit fixes
+        id: commit
+        run: |
+          if git diff --quiet; then
+            echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git --no-pager diff --stat
+          if [ "${{ github.event_name }}" != "pull_request" ] \
+             || [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            echo "::error::oxlint/pint found fixable issues. Run 'npx oxlint --fix' (frontend) and 'vendor/bin/pint' (backend) locally."
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "style: apply oxlint --fix and pint"
+          git push
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: Tests (Pest)
+    needs: lint
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: split_even_wiser_test
+          POSTGRES_USER: split_even_wiser
+          POSTGRES_PASSWORD: split_even_wiser
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U split_even_wiser"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_USERNAME: split_even_wiser
+      DB_PASSWORD: split_even_wiser
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Test exactly what the lint job left behind (including its fix commit).
+          ref: ${{ needs.lint.outputs.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_pgsql, pgsql, gd, intl, bcmath, zip, redis
+          tools: composer:v2
+          coverage: none
+
+      - name: Install dependencies
+        run: |
+          cp .env.example .env
+          composer install --no-interaction --no-progress --prefer-dist
+          php artisan key:generate
+
+      - name: Run tests
+        run: vendor/bin/pest
