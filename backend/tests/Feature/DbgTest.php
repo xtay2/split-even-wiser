@@ -1,4 +1,5 @@
 <?php
+
 it('dumps effective cache/db config', function () {
     dump([
         'cache.default' => config('cache.default'),

@@ -4,6 +4,7 @@ use App\Models\Expense;
 use App\Models\User;
 use App\Notifications\ExpenseAdded;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 
 it('creates an expense split evenly and records it as version 1', function () {
     $alice = User::factory()->create();
@@ -180,7 +181,7 @@ it('is idempotent when the same client_uuid is replayed, for offline sync retrie
     $alice = User::factory()->create();
     $bob = User::factory()->create();
     $group = groupWithMembers($alice, $bob);
-    $clientUuid = (string) Illuminate\Support\Str::uuid();
+    $clientUuid = (string) Str::uuid();
 
     $payload = [
         'title' => 'Dinner',

@@ -6,6 +6,7 @@ use App\Models\Settlement;
 use App\Models\User;
 use App\Notifications\SettlementRecorded;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 
 it('records a settlement made by the authenticated user', function () {
     $alice = User::factory()->create();
@@ -44,7 +45,7 @@ it('is idempotent when the same client_uuid is replayed, for offline sync retrie
     $alice = User::factory()->create();
     $bob = User::factory()->create();
     $group = groupWithMembers($alice, $bob);
-    $clientUuid = (string) Illuminate\Support\Str::uuid();
+    $clientUuid = (string) Str::uuid();
 
     $payload = ['to_user_id' => $bob->id, 'amount' => 10, 'currency' => 'EUR', 'date' => '2026-07-16', 'client_uuid' => $clientUuid];
 

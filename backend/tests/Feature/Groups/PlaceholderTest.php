@@ -10,7 +10,6 @@ use App\Models\GroupMember;
 use App\Models\LoginToken;
 use App\Models\Settlement;
 use App\Models\User;
-use App\Notifications\FriendRequestReceived;
 use App\Services\GroupBalanceCalculator;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
