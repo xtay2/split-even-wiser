@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams, Navigate } from 'react-router'
 import { useDispatch, useSelector } from 'react-redux'
 import {
-  useGetGroupQuery,
   useGetSettlementQuery,
   useCreateSettlementMutation,
   useUpdateSettlementMutation,
@@ -10,7 +9,8 @@ import {
 } from '../api/groupsApi'
 import { selectCurrentUser } from '../features/auth/authSlice'
 import useOnlineStatus from '../features/offline/useOnlineStatus'
-import { queueOfflineAction } from '../features/offline/offlineQueueSlice'
+import useOfflineAwareGroup from '../features/offline/useOfflineAwareGroup'
+import { isLocalId, queueOfflineAction, resolveId, selectResolvedIds } from '../features/offline/offlineQueueSlice'
 import { todayIsoDate } from '../utils/expenseDate'
 import { personName } from '../utils/personName'
 import AddPlaceholderDialog from '../components/AddPlaceholderDialog'
@@ -19,14 +19,16 @@ import './ExpenseFormPage.css'
 const SOMEONE_ELSE = '__new__'
 
 export default function SettlementFormPage() {
-  const { groupId, settlementId } = useParams()
+  const { groupId: routeGroupId, settlementId } = useParams()
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const currentUser = useSelector(selectCurrentUser)
   const isOnline = useOnlineStatus()
   const isEditing = Boolean(settlementId)
 
-  const { data: group, error: groupError } = useGetGroupQuery(groupId)
+  const resolvedIds = useSelector(selectResolvedIds)
+  // groupId follows the group to its real id should it sync while this form is open.
+  const { group, error: groupError, groupId, isLocal } = useOfflineAwareGroup(routeGroupId)
   const { data: settlement } = useGetSettlementQuery({ groupId, settlementId }, { skip: !isEditing })
   const [createSettlement, { isLoading: isCreating, error: createError }] = useCreateSettlementMutation()
   const [updateSettlement, { isLoading: isUpdating, error: updateError }] = useUpdateSettlementMutation()
@@ -49,6 +51,12 @@ export default function SettlementFormPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipients.length, isEditing])
 
+  // A placeholder created offline synced while this form is open - swap in its real id.
+  useEffect(() => {
+    setFromUserId((id) => resolveId(resolvedIds, id))
+    setToUserId((id) => resolveId(resolvedIds, id))
+  }, [resolvedIds])
+
   useEffect(() => {
     if (settlement) {
       setAmount(String(settlement.amount))
@@ -59,7 +67,7 @@ export default function SettlementFormPage() {
     }
   }, [settlement])
 
-  if (groupError?.status === 403 || groupError?.status === 404) {
+  if (groupError?.status === 403 || groupError?.status === 404 || (isLocal && !group)) {
     return <Navigate to="/groups" replace />
   }
 
@@ -73,9 +81,12 @@ export default function SettlementFormPage() {
 
   async function handleSubmit(event) {
     event.preventDefault()
+    // Select values are strings; map them back to the member ids, which are numeric except for
+    // placeholders added offline.
+    const memberId = (value) => members.find((member) => String(member.id) === String(value))?.id
     const payload = {
-      from_user_id: Number(fromUserId),
-      to_user_id: Number(toUserId),
+      from_user_id: memberId(fromUserId),
+      to_user_id: memberId(toUserId),
       amount: Number(amount).toFixed(2),
       currency: currency.toUpperCase(),
       date,
@@ -91,7 +102,8 @@ export default function SettlementFormPage() {
       return
     }
 
-    if (!isOnline) {
+    if (!isOnline || isLocal || isLocalId(payload.from_user_id) || isLocalId(payload.to_user_id)) {
+      // Offline, or refers to a group/placeholder that hasn't synced yet - queue it behind those.
       dispatch(queueOfflineAction({ type: 'settlement', groupId, payload }))
       navigate(`/groups/${groupId}`)
       return
@@ -217,7 +229,7 @@ export default function SettlementFormPage() {
                 {personName(member, currentUser.id)}
               </option>
             ))}
-            <option value={SOMEONE_ELSE} disabled={!isOnline}>
+            <option value={SOMEONE_ELSE} disabled={isEditing && !isOnline}>
               Someone else…
             </option>
           </select>
@@ -226,6 +238,7 @@ export default function SettlementFormPage() {
         <AddPlaceholderDialog
           open={showAddPlaceholder}
           groupId={groupId}
+          members={members}
           onAdded={handlePlaceholderAdded}
           onCancel={() => setShowAddPlaceholder(false)}
         />

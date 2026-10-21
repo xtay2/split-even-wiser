@@ -5,9 +5,14 @@ import { GroupAddIcon } from './icons/GroupAddIcon'
 import { LinkIcon } from './icons/LinkIcon.tsx'
 import { personName } from '../utils/personName'
 import ClaimPlaceholderDialog from './ClaimPlaceholderDialog'
+import { isLocalId } from '../features/offline/offlineQueueSlice'
 import GroupInviteLinkDialog from './GroupInviteLinkDialog'
 
-export default function GroupMembersTab({ hidden, groupId, group, currentUser, isOnline }) {
+export default function GroupMembersTab({ hidden, groupId, group, currentUser, isOnline, isLocal }) {
+  // Placeholders can be added offline (via the expense/settlement forms), but adding real users,
+  // invite links and claims need the server - and a group created offline has to sync first.
+  const canReachServer = isOnline && !isLocal
+
   const { data: friends = [] } = useGetFriendsQuery()
   const [addMember, { isLoading: isAdding, error: addError }] = useAddGroupMemberMutation()
   const [claimingMember, setClaimingMember] = useState(null)
@@ -49,6 +54,9 @@ export default function GroupMembersTab({ hidden, groupId, group, currentUser, i
   return (
     <section hidden={hidden} className="members-section">
       {!isOnline && <p className="expense-form-offline-note">Adding members requires an internet connection.</p>}
+      {isOnline && isLocal && (
+        <p className="expense-form-offline-note">This group is still syncing - adding members is possible once it's done.</p>
+      )}
       {showAddMember && (
         <form onSubmit={handleAddMember} className="friends-add-form">
           <div className="member-suggest">
@@ -106,13 +114,14 @@ export default function GroupMembersTab({ hidden, groupId, group, currentUser, i
             <span className="member-row__name">
               {personName(member, currentUser.id)}
               {member.is_placeholder && <span className="member-badge">Placeholder</span>}
+              {isLocalId(member.id) && <span className="member-badge">Waiting to sync</span>}
             </span>
             {member.is_placeholder && member.id !== currentUser.id && (
               <button
                 type="button"
                 className="member-row__claim-btn"
                 onClick={() => setClaimingMember(member)}
-                disabled={!isOnline}
+                disabled={!canReachServer || isLocalId(member.id)}
               >
                 That's me
               </button>
@@ -139,7 +148,7 @@ export default function GroupMembersTab({ hidden, groupId, group, currentUser, i
           type="button"
           className="group-fab group-fab--right"
           onClick={() => setShowInviteLink(true)}
-          disabled={!isOnline}
+          disabled={!canReachServer}
         >
           <LinkIcon fontSizePx={20} />
           Invitation Link
@@ -150,7 +159,7 @@ export default function GroupMembersTab({ hidden, groupId, group, currentUser, i
           onClick={() => {
             setShowAddMember((v) => !v);
           }}
-          disabled={!isOnline}
+          disabled={!canReachServer}
         >
           {showAddMember ? (
             'Cancel'

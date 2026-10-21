@@ -6,11 +6,14 @@ import { buildLedgerItems, filterLedgerItems, groupItemsByMonth, getMyExpenseNet
 import LoadingIndicator from './LoadingIndicator'
 import { PaymentsIcon } from './icons/PaymentsIcon.tsx'
 import { ReceiptLongIcon } from './icons/ReceiptLongIcon.tsx'
+import { isLocalId } from '../features/offline/offlineQueueSlice'
 
 export default function GroupPaymentsTab({ hidden, groupId, currentUser, nameFor }) {
   const navigate = useNavigate()
-  const { data: expenses = [], isLoading: expensesLoading } = useGetExpensesQuery(groupId)
-  const { data: settlements = [], isLoading: settlementsLoading } = useGetSettlementsQuery(groupId)
+  // A group created offline doesn't exist on the server yet - nothing to fetch.
+  const skip = isLocalId(groupId)
+  const { data: expenses = [], isLoading: expensesLoading } = useGetExpensesQuery(groupId, { skip })
+  const { data: settlements = [], isLoading: settlementsLoading } = useGetSettlementsQuery(groupId, { skip })
   const [searchQuery, setSearchQuery] = useState('')
 
   const items = buildLedgerItems(expenses, settlements)

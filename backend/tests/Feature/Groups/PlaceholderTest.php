@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\GroupBalanceCalculator;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 
 it('creates a name-only placeholder as an active member with no email and no mail sent', function () {
     Mail::fake();
@@ -396,4 +397,27 @@ it('records a claim in the activity feed of every group the placeholder belonged
         $response->assertOk()->assertJsonCount(1);
         expect($response->json()[0]['type'])->toBe('placeholder_claimed');
     }
+});
+
+it('returns the existing placeholder when an offline sync retries with the same client_uuid', function () {
+    Mail::fake();
+    $alice = User::factory()->create();
+    $group = groupWithMembers($alice);
+    $clientUuid = (string) Str::uuid();
+
+    $first = $this->actingAs($alice)->postJson("/api/groups/{$group->id}/placeholders", [
+        'name' => 'Offline Olga',
+        'email' => 'olga@example.com',
+        'client_uuid' => $clientUuid,
+    ])->assertCreated();
+
+    $retry = $this->actingAs($alice)->postJson("/api/groups/{$group->id}/placeholders", [
+        'name' => 'Offline Olga',
+        'email' => 'olga@example.com',
+        'client_uuid' => $clientUuid,
+    ])->assertOk();
+
+    expect($retry->json('placeholder.id'))->toBe($first->json('placeholder.id'));
+    expect(User::where('display_name', 'Offline Olga')->count())->toBe(1);
+    Mail::assertQueued(GroupInviteMail::class, 1);
 });

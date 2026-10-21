@@ -10,14 +10,11 @@ export default function GroupPendingSyncBanner({ groupId }) {
     return null
   }
 
-  const pendingExpenses = pendingItems.filter((item) => item.type === 'expense')
-  const pendingSettlements = pendingItems.filter((item) => item.type === 'settlement')
-
   return (
     <section>
       <h2 className="friends-section-title">Pending sync</h2>
       <ul className="pending-sync-list">
-        {[...pendingExpenses, ...pendingSettlements].map((item) => (
+        {pendingItems.map((item) => (
           <li key={item.id} className="pending-sync-row">
             <span className="pending-sync-row__label">{item.label}</span>
             {item.status === 'error' ? (

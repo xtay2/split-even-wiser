@@ -82,3 +82,9 @@
   font-size: 0.82rem;
   color: var(--ink-soft);
 }
+
+.groups-card__pending {
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--ink-soft);
+}

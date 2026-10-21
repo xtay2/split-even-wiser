@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams, Navigate } from 'react-router'
 import { useDispatch, useSelector } from 'react-redux'
 import {
-  useGetGroupQuery,
   useGetExpenseQuery,
   useCreateExpenseMutation,
   useUpdateExpenseMutation,
@@ -10,13 +9,18 @@ import {
 } from '../api/groupsApi'
 import { selectCurrentUser } from '../features/auth/authSlice'
 import useOnlineStatus from '../features/offline/useOnlineStatus'
-import { queueOfflineAction } from '../features/offline/offlineQueueSlice'
+import useOfflineAwareGroup from '../features/offline/useOfflineAwareGroup'
+import { isLocalId, queueOfflineAction, resolveId, selectResolvedIds } from '../features/offline/offlineQueueSlice'
 import { todayIsoDate } from '../utils/expenseDate'
 import { personName } from '../utils/personName'
 import AddPlaceholderDialog from '../components/AddPlaceholderDialog'
 import './ExpenseFormPage.css'
 
 const SOMEONE_ELSE = '__new__'
+
+function hasLocalIds(payload) {
+  return [payload.paid_by, ...payload.shares.map((share) => share.user_id)].some(isLocalId)
+}
 
 // Distributes `totalCents` evenly across `count` shares, handing any remainder cent(s)
 // to the first shares so the parts always sum exactly back to the total.
@@ -49,7 +53,7 @@ function persistParticipants(groupId, participants) {
 }
 
 export default function ExpenseFormPage() {
-  const { groupId, expenseId } = useParams()
+  const { groupId: routeGroupId, expenseId } = useParams()
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const [searchParams] = useSearchParams()
@@ -58,7 +62,9 @@ export default function ExpenseFormPage() {
   const isOnline = useOnlineStatus()
   const isEditing = Boolean(expenseId)
 
-  const { data: group, error: groupError } = useGetGroupQuery(groupId)
+  const resolvedIds = useSelector(selectResolvedIds)
+  // groupId follows the group to its real id should it sync while this form is open.
+  const { group, error: groupError, groupId, isLocal } = useOfflineAwareGroup(routeGroupId)
   const { data: expense } = useGetExpenseQuery({ groupId, expenseId }, { skip: !isEditing })
   const [createExpense, { isLoading: isCreating, error: createError }] = useCreateExpenseMutation()
   const [updateExpense, { isLoading: isUpdating, error: updateError }] = useUpdateExpenseMutation()
@@ -88,6 +94,17 @@ export default function ExpenseFormPage() {
     }
   }, [group, participants, isEditing, groupId])
 
+  // A group or placeholder created offline synced while this form is open - swap in the real
+  // ids so the selection survives and the submitted expense references them.
+  useEffect(() => {
+    setPaidBy((id) => resolveId(resolvedIds, id))
+    setParticipants((prev) =>
+      Object.keys(prev).some((id) => resolvedIds[id])
+        ? Object.fromEntries(Object.entries(prev).map(([id, value]) => [resolveId(resolvedIds, id), value]))
+        : prev,
+    )
+  }, [resolvedIds])
+
   useEffect(() => {
     if (expense) {
       const version = expense.current_version
@@ -113,7 +130,7 @@ export default function ExpenseFormPage() {
     target?.current?.focus()
   }, [group, expense, isEditing, focusField])
 
-  if (groupError?.status === 403 || groupError?.status === 404) {
+  if (groupError?.status === 403 || groupError?.status === 404 || (isLocal && !group)) {
     return <Navigate to="/groups" replace />
   }
 
@@ -153,7 +170,8 @@ export default function ExpenseFormPage() {
       setPlaceholderDialogFor('paidBy')
       return
     }
-    setPaidBy(Number(value))
+    // Placeholders added offline have string ids, everyone else a numeric one.
+    setPaidBy(group.members.find((member) => String(member.id) === value)?.id)
   }
 
   function handlePlaceholderAdded(newMember) {
@@ -202,7 +220,8 @@ export default function ExpenseFormPage() {
       return
     }
 
-    if (!isOnline) {
+    if (!isOnline || isLocal || hasLocalIds(payload)) {
+      // Offline, or refers to a group/placeholder that hasn't synced yet - queue it behind those.
       dispatch(queueOfflineAction({ type: 'expense', groupId, payload, label: title }))
       navigate(`/groups/${groupId}`)
       return
@@ -300,7 +319,7 @@ export default function ExpenseFormPage() {
                 {personName(member, currentUser.id)}
               </option>
             ))}
-            <option value={SOMEONE_ELSE} disabled={!isOnline}>
+            <option value={SOMEONE_ELSE} disabled={isEditing && !isOnline}>
               Someone else…
             </option>
           </select>
@@ -309,6 +328,7 @@ export default function ExpenseFormPage() {
         <AddPlaceholderDialog
           open={placeholderDialogFor !== null}
           groupId={groupId}
+          members={group.members}
           onAdded={handlePlaceholderAdded}
           onCancel={() => setPlaceholderDialogFor(null)}
         />
@@ -365,7 +385,7 @@ export default function ExpenseFormPage() {
             type="button"
             className="expense-form-add-participant"
             onClick={() => setPlaceholderDialogFor('participant')}
-            disabled={!isOnline}
+            disabled={isEditing && !isOnline}
           >
             + Someone else…
           </button>

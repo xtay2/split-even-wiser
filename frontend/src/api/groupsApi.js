@@ -34,10 +34,10 @@ export const groupsApi = apiSlice.injectEndpoints({
       invalidatesTags: ['Groups'],
     }),
     addPlaceholderMember: builder.mutation({
-      query: ({ groupId, name, email }) => ({
+      query: ({ groupId, name, email, client_uuid }) => ({
         url: `/groups/${groupId}/placeholders`,
         method: 'POST',
-        body: { name, email },
+        body: { name, email, client_uuid },
       }),
       invalidatesTags: (result, error, { groupId }) => [{ type: 'Group', id: groupId }],
     }),

@@ -20,4 +20,4 @@ Die App ist eine simple gratis Alternative zu Splitwise, einer mobile App zum Au
     - Man kann angeben seine Schulden beglichen zu haben.
     - Schulden werden transitiv minifiziert. Wenn Person A, Person B 5€ schuldet, und Person B, Person C 5€ schuldet, schuldet nur Person A, Person C 5€.
     - Man kann die Gruppe erst verlassen, wenn man quit ist.
-- Die App soll eine Offline Modus haben in dem es möglich ist, Zahlungen und Begleichungen vorzumerken, jedoch nicht, die Gruppe zu verlassen.
+- Die App soll eine Offline Modus haben in dem es möglich ist, Zahlungen und Begleichungen vorzumerken sowie Gruppen zu erstellen und Platzhalter hinzuzufügen, jedoch nicht, die Gruppe zu verlassen. Alles wird synchronisiert, sobald wieder eine Verbindung besteht.

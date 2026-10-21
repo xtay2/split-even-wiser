@@ -31,6 +31,7 @@ class User extends Authenticatable
         'display_name',
         'is_placeholder',
         'invited_by',
+        'client_uuid',
         'claimed_at',
     ];
 

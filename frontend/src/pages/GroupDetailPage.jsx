@@ -1,9 +1,10 @@
 import {useCallback, useLayoutEffect, useRef, useState} from 'react'
 import {Navigate, useNavigate, useParams} from 'react-router'
 import {useSelector} from 'react-redux'
-import {useGetGroupQuery, useLeaveGroupMutation} from '../api/groupsApi'
+import {useLeaveGroupMutation} from '../api/groupsApi'
 import {selectCurrentUser} from '../features/auth/authSlice'
 import useOnlineStatus from '../features/offline/useOnlineStatus'
+import useOfflineAwareGroup from '../features/offline/useOfflineAwareGroup'
 import ConfirmDialog from '../components/ConfirmDialog'
 import LoadingIndicator from '../components/LoadingIndicator'
 import GroupPendingSyncBanner from '../components/GroupPendingSyncBanner'
@@ -61,14 +62,19 @@ export default function GroupDetailPage() {
     const currentUser = useSelector(selectCurrentUser)
     const isOnline = useOnlineStatus()
 
-    const {data: group, error: groupError} = useGetGroupQuery(groupId)
+    const {group, error: groupError, isLocal, resolvedId} = useOfflineAwareGroup(groupId)
     const [leaveGroup, {isLoading: isLeaving, error: leaveError}] = useLeaveGroupMutation()
 
     const [activeTab, setActiveTab] = useState(null)
     const [tabsRef, tabsCollapsed] = useCollapseOnOverflow()
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
 
-    if (groupError?.status === 403 || groupError?.status === 404) {
+    // A group created offline has synced - move over to its real id.
+    if (resolvedId) {
+        return <Navigate to={`/groups/${resolvedId}`} replace/>
+    }
+
+    if (groupError?.status === 403 || groupError?.status === 404 || (isLocal && !group)) {
         return <Navigate to="/groups" replace/>
     }
 
@@ -105,7 +111,8 @@ export default function GroupDetailPage() {
                             type="button"
                             className="group-detail-title group-detail-title-btn"
                             onClick={() => navigate(`/groups/${groupId}/edit`)}
-                            title="Edit group"
+                            disabled={isLocal}
+                            title={isLocal ? 'Waiting to sync' : 'Edit group'}
                         >
                             {group.name}
                         </button>
@@ -115,9 +122,9 @@ export default function GroupDetailPage() {
                         type="button"
                         className="group-leave-icon-btn"
                         onClick={() => setShowLeaveConfirm(true)}
-                        disabled={isLeaving || !isOnline}
+                        disabled={isLeaving || !isOnline || isLocal}
                         aria-label={isOnline ? 'Leave group' : 'Leave group (no internet connection)'}
-                        title={isOnline ? 'Leave group' : 'No internet connection'}
+                        title={isOnline ? (isLocal ? 'Waiting to sync' : 'Leave group') : 'No internet connection'}
                     >
                         {isOnline ? <LogoutIcon/> : <WifiOffIcon/>}
                     </button>
@@ -180,6 +187,7 @@ export default function GroupDetailPage() {
                 group={group}
                 currentUser={currentUser}
                 isOnline={isOnline}
+                isLocal={isLocal}
             />
             <GroupActivityTab hidden={effectiveTab !== 'activity'} groupId={groupId} currentUserId={currentUser.id}/>
         </div>
