@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useGetBalancesQuery, useCreateSettlementMutation } from '../api/groupsApi'
 import useOnlineStatus from '../features/offline/useOnlineStatus'
-import { queueOfflineAction, selectQueueItems } from '../features/offline/offlineQueueSlice'
+import { isLocalId, queueOfflineAction, selectQueueItems } from '../features/offline/offlineQueueSlice'
 import ConfirmDialog from './ConfirmDialog'
 import ClaimPlaceholderDialog from './ClaimPlaceholderDialog'
 import { todayIsoDate } from '../utils/expenseDate'
@@ -12,7 +12,7 @@ export default function GroupBalancesTab({ hidden, groupId, currentUser, nameFor
   const isOnline = useOnlineStatus()
   const queueItems = useSelector(selectQueueItems)
 
-  const { data: balances = [] } = useGetBalancesQuery(groupId)
+  const { data: balances = [] } = useGetBalancesQuery(groupId, { skip: isLocalId(groupId) })
   const [createSettlement] = useCreateSettlementMutation()
 
   const [showSettleAllConfirm, setShowSettleAllConfirm] = useState(false)

@@ -1,18 +1,37 @@
 import { useEffect, useRef, useState } from 'react'
+import { useDispatch } from 'react-redux'
 import { useAddPlaceholderMemberMutation } from '../api/groupsApi'
+import useOnlineStatus from '../features/offline/useOnlineStatus'
+import { placeholderMemberFromItem, queueOfflinePlaceholder } from '../features/offline/offlineQueueSlice'
 import './ConfirmDialog.css'
 import './AddPlaceholderDialog.css'
 
-export default function AddPlaceholderDialog({ open, groupId, onAdded, onCancel }) {
-  const [addPlaceholder, { isLoading, error }] = useAddPlaceholderMemberMutation()
+// Checks the server would otherwise do, so a placeholder queued offline isn't rejected on sync.
+function offlineValidationError(members, name, email) {
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return 'Please enter a valid email address.'
+  }
+  const displayName = (name || email.split('@')[0]).toLowerCase()
+  if (members.some((member) => member.is_placeholder && (member.display_name ?? '').toLowerCase() === displayName)) {
+    return 'This group already has a placeholder with that name.'
+  }
+  return null
+}
+
+export default function AddPlaceholderDialog({ open, groupId, members = [], onAdded, onCancel }) {
+  const dispatch = useDispatch()
+  const isOnline = useOnlineStatus()
+  const [addPlaceholder, { isLoading, error: serverError }] = useAddPlaceholderMemberMutation()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [offlineError, setOfflineError] = useState(null)
   const nameInputRef = useRef(null)
 
   useEffect(() => {
     if (open) {
       setName('')
       setEmail('')
+      setOfflineError(null)
       nameInputRef.current?.focus()
     }
   }, [open])
@@ -21,17 +40,36 @@ export default function AddPlaceholderDialog({ open, groupId, onAdded, onCancel 
 
   const canSubmit = Boolean(name.trim() || email.trim())
 
+  // Offline the placeholder is queued and handed back with a local id; any expense/settlement
+  // using it is synced after it, with the real id patched in.
+  function queuePlaceholder(payload) {
+    const validationError = offlineValidationError(members, payload.name, payload.email)
+    if (validationError) {
+      setOfflineError(validationError)
+      return
+    }
+    const action = queueOfflinePlaceholder({ groupId, ...payload })
+    dispatch(action)
+    onAdded(placeholderMemberFromItem(action.payload))
+  }
+
   async function handleSubmit() {
     if (!canSubmit) return
+    const payload = { name: name.trim() || undefined, email: email.trim() || undefined }
+
+    if (!isOnline) {
+      queuePlaceholder(payload)
+      return
+    }
+
     try {
-      const result = await addPlaceholder({
-        groupId,
-        name: name.trim() || undefined,
-        email: email.trim() || undefined,
-      }).unwrap()
+      const result = await addPlaceholder({ groupId, ...payload }).unwrap()
       onAdded(result.placeholder)
-    } catch {
-      // error surfaced below
+    } catch (submitError) {
+      if (submitError?.status === 'FETCH_ERROR') {
+        queuePlaceholder(payload)
+      }
+      // validation error surfaced below
     }
   }
 
@@ -80,10 +118,14 @@ export default function AddPlaceholderDialog({ open, groupId, onAdded, onCancel 
               className="add-placeholder-input"
             />
           </label>
-          {error && (
-            <p className="add-placeholder-error">
-              {error.data?.errors?.email?.[0] ?? error.data?.errors?.name?.[0] ?? error.data?.message ?? 'Could not add.'}
-            </p>
+          {offlineError ? (
+            <p className="add-placeholder-error">{offlineError}</p>
+          ) : (
+            serverError && (
+              <p className="add-placeholder-error">
+                {serverError.data?.errors?.email?.[0] ?? serverError.data?.errors?.name?.[0] ?? serverError.data?.message ?? 'Could not add.'}
+              </p>
+            )
           )}
           <div className="confirm-dialog__actions">
             <button type="button" className="confirm-dialog__cancel-btn" onClick={onCancel}>
