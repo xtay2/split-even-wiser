@@ -4,6 +4,7 @@ use App\Models\Group;
 use App\Models\User;
 use App\Notifications\AddedToGroup;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 
 it('creates a group and auto-joins the creator as a member', function () {
     $user = User::factory()->create();
@@ -97,4 +98,22 @@ it('lets a member update the group name and description', function () {
 
     $this->actingAs($member)->patchJson("/api/groups/{$group->id}", ['name' => 'New Name'])
         ->assertOk()->assertJsonPath('name', 'New Name');
+});
+
+it('returns the existing group when an offline sync retries with the same client_uuid', function () {
+    $user = User::factory()->create();
+    $clientUuid = (string) Str::uuid();
+
+    $first = $this->actingAs($user)->postJson('/api/groups', [
+        'name' => 'Offline trip',
+        'client_uuid' => $clientUuid,
+    ])->assertCreated();
+
+    $retry = $this->actingAs($user)->postJson('/api/groups', [
+        'name' => 'Offline trip',
+        'client_uuid' => $clientUuid,
+    ])->assertOk();
+
+    expect($retry->json('id'))->toBe($first->json('id'));
+    expect(Group::where('client_uuid', $clientUuid)->count())->toBe(1);
 });

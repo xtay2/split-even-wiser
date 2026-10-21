@@ -16,6 +16,7 @@ class Group extends Model
         'name',
         'description',
         'created_by',
+        'client_uuid',
     ];
 
     public function creator(): BelongsTo

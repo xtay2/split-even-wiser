@@ -23,6 +23,26 @@ class PlaceholderController extends Controller
     {
         $this->authorize('addPlaceholder', $group);
 
+        $clientUuid = $request->validate([
+            'client_uuid' => ['nullable', 'uuid'],
+        ])['client_uuid'] ?? null;
+
+        // Offline clients resend the same client_uuid when a sync retry follows a dropped
+        // connection. Checked before validation, since the retried email/name would otherwise
+        // be rejected as already taken by the placeholder the first attempt created.
+        if ($clientUuid !== null) {
+            $existing = $group->members()
+                ->where('users.client_uuid', $clientUuid)
+                ->where('is_placeholder', true)
+                ->first();
+            if ($existing !== null) {
+                return response()->json([
+                    'group' => $group->fresh('members'),
+                    'placeholder' => $existing,
+                ], 200);
+            }
+        }
+
         $data = $request->validate([
             'name' => ['nullable', 'required_without:email', 'string', 'max:255'],
             'email' => ['nullable', 'required_without:name', 'email', 'max:255', 'unique:users,email'],
@@ -47,6 +67,7 @@ class PlaceholderController extends Controller
             'email' => $data['email'] ?? null,
             'is_placeholder' => true,
             'invited_by' => $request->user()->id,
+            'client_uuid' => $clientUuid,
         ]);
 
         $group->groupMembers()->create(['user_id' => $placeholder->id, 'joined_at' => now()]);

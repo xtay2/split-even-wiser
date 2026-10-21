@@ -25,7 +25,19 @@ class GroupController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
+            'client_uuid' => ['nullable', 'uuid'],
         ]);
+
+        // Offline clients resend the same client_uuid when a sync retry follows a dropped
+        // connection; returning the original group keeps the retry idempotent.
+        if (isset($data['client_uuid'])) {
+            $existing = Group::where('client_uuid', $data['client_uuid'])
+                ->where('created_by', $request->user()->id)
+                ->first();
+            if ($existing !== null) {
+                return response()->json($existing->load('members'), 200);
+            }
+        }
 
         $group = Group::create([
             ...$data,
