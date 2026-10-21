@@ -9,6 +9,28 @@ import {
   selectQueueItems,
 } from './offlineQueueSlice'
 
+// A request that never settles (e.g. a half-open connection right after coming back online)
+// would otherwise block every later sync. Giving up on it is safe: each item carries a
+// client_uuid, so if the request did reach the server, the retry returns the same record.
+const SEND_TIMEOUT_MS = 20_000
+
+// After a network failure, retry on this schedule (doubling, capped) - the 'online' event alone
+// isn't enough, as it often fires before the connection actually works.
+const RETRY_BASE_DELAY_MS = 5_000
+const RETRY_MAX_DELAY_MS = 60_000
+
+function isNetworkError(error) {
+  return error?.status === 'FETCH_ERROR' || error?.status === 'TIMEOUT_ERROR'
+}
+
+function withTimeout(promise) {
+  let timer
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject({ status: 'TIMEOUT_ERROR' }), SEND_TIMEOUT_MS)
+  })
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer))
+}
+
 // The local ids (offline-created group/placeholders) an item can't be sent without.
 function localIdsReferencedBy(item) {
   const ids = [item.type === 'group' ? null : item.groupId]
@@ -47,16 +69,23 @@ async function sendItem(dispatch, item) {
 // Replays queued offline items against the API once a connection is available, in the order they
 // were queued - so a group or placeholder created offline exists (and its real id has been patched
 // into later items) before anything referencing it is sent.
-// Runs on mount (in case items were queued in a previous session) and on every 'online' event.
+// Runs on mount (in case items were queued in a previous session), whenever the queue changes, on
+// every 'online' event and when the app comes back to the foreground - and keeps retrying with
+// backoff while the network keeps failing.
 export default function useOfflineSync() {
   const dispatch = useDispatch()
   const store = useStore()
   const items = useSelector(selectQueueItems)
   const isSyncingRef = useRef(false)
+  const retryTimerRef = useRef(null)
+  const retryDelayRef = useRef(RETRY_BASE_DELAY_MS)
 
   const syncQueue = useCallback(async () => {
     if (isSyncingRef.current || !navigator.onLine) return
     isSyncingRef.current = true
+    clearTimeout(retryTimerRef.current)
+    retryTimerRef.current = null
+    let hitNetworkError = false
 
     try {
       const attempted = new Set()
@@ -81,11 +110,13 @@ export default function useOfflineSync() {
         }
 
         try {
-          await sendItem(dispatch, item)
+          await withTimeout(sendItem(dispatch, item))
           dispatch(itemSyncSucceeded({ id: item.id }))
+          retryDelayRef.current = RETRY_BASE_DELAY_MS
         } catch (error) {
-          if (error?.status === 'FETCH_ERROR' || error?.status === 'TIMEOUT_ERROR') {
-            // Connection dropped again mid-sync - stop here, the next 'online' event retries.
+          if (isNetworkError(error)) {
+            // Connection isn't (or no longer) working - stop here and retry later.
+            hitNetworkError = true
             break
           }
           dispatch(
@@ -99,6 +130,11 @@ export default function useOfflineSync() {
     } finally {
       isSyncingRef.current = false
     }
+
+    if (hitNetworkError) {
+      retryTimerRef.current = setTimeout(syncQueue, retryDelayRef.current)
+      retryDelayRef.current = Math.min(retryDelayRef.current * 2, RETRY_MAX_DELAY_MS)
+    }
   }, [dispatch, store])
 
   // Re-run whenever the queue changes, so newly queued or retried items go out right away.
@@ -107,7 +143,15 @@ export default function useOfflineSync() {
   }, [syncQueue, items])
 
   useEffect(() => {
+    const syncWhenVisible = () => {
+      if (document.visibilityState === 'visible') syncQueue()
+    }
     window.addEventListener('online', syncQueue)
-    return () => window.removeEventListener('online', syncQueue)
+    document.addEventListener('visibilitychange', syncWhenVisible)
+    return () => {
+      window.removeEventListener('online', syncQueue)
+      document.removeEventListener('visibilitychange', syncWhenVisible)
+      clearTimeout(retryTimerRef.current)
+    }
   }, [syncQueue])
 }
